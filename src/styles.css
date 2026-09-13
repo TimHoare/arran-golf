@@ -347,8 +347,8 @@ p { margin: 0; }
 .itin-day:active { background: var(--soft); }
 .itin-day .chev { color: var(--ink-3); margin-top: 22px; }
 .itin-groups { display: grid; gap: 4px; margin-top: 10px; }
-.itin-group { display: grid; grid-template-columns: 48px 1fr; gap: 8px; font-size: 13.5px; color: var(--ink-2); }
-.itin-group b { color: var(--ink); font-weight: 700; }
+.itin-group { display: grid; grid-template-columns: 64px 1fr; gap: 8px; font-size: 13.5px; color: var(--ink-2); }
+.itin-group b { color: var(--ink); font-weight: 700; white-space: nowrap; }
 .itin-group i { font-style: normal; font-weight: 600; color: var(--ink); }
 .rules-note { margin-top: 18px; line-height: 1.5; }
 .tabs { grid-template-columns: repeat(3, 1fr); }

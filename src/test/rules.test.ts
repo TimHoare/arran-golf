@@ -1,7 +1,7 @@
 // This trip's competition rules: the index moving by finishing place, chained
 // through seven rounds, and the extras staying off.
 import { describe, expect, it } from 'vitest';
-import { PLAYERS, R, ROUNDS, RULES, dayLabel } from '../data/trip';
+import { PLAYERS, R, ROUNDS, RULES, dayLabel, holesLabel } from '../data/trip';
 import { defaultState, type TripState } from '../lib/state';
 import {
   bonusHoleFor, currentIndex, describeRules, indexHistory, indexTable, phFor, playerTally, playingHandicap, roundStatus,
@@ -113,5 +113,6 @@ describe('two rounds in a day', () => {
     expect(dayLabel(ROUNDS[1])).toBe('Thu am');
     expect(dayLabel(ROUNDS[2])).toBe('Thu pm');
     expect(ROUNDS.map((r) => r.short)).toEqual(['Lochranza', 'Brodick', 'Lamlash', 'Corrie', 'Whiting Bay', 'Machrie Bay', 'Shiskine']);
+    expect(ROUNDS.map(holesLabel)).toEqual(['11 holes, played as 18', '18 holes', '18 holes', '9 holes, twice', '18 holes', '9 holes, twice', '12 holes']);
   });
 });

@@ -24,7 +24,7 @@ export interface Round {
   format: 'stableford' | 'scramble'; pairs: boolean;
   par: number; cr: number; slope: number; tees: string;
   holes: Hole[]; groups: Group[];
-  loops?: 2;            // a nine-hole course played twice
+  courseHoles?: number; // greens on the ground when fewer than the holes played: 9 played twice, Lochranza's 11 as 18
   altTees?: TeeSet[];   // besides the default tees above; selectable in settings
 }
 export interface Player { id: string; name: string; start: number }
@@ -57,7 +57,7 @@ export const ROUNDS: Round[] = [
   // indexes look generated (odd front, even back) rather than the club's.
   { id: 'r1', n: 1, dow: 'Wed', dnum: 23, mon: 'Sept', format: 'stableford', pairs: false,
     club: 'Lochranza Golf', short: 'Lochranza', town: 'Lochranza', address: 'Lochranza Campsite, Lochranza, Isle of Arran, KA27 8HL',
-    par: 54, cr: 52.1, slope: 87, tees: 'white',
+    par: 54, cr: 52.1, slope: 87, tees: 'white', courseHoles: 11,
     holes: card(Array(18).fill(3), [1,7,5,17,9,3,11,15,13, 2,8,6,18,10,4,12,16,14], [110,67,77,87,98,87,116,91,103, 73,110,67,77,87,98,87,116,91]),
     groups: [{ tee: 'Turn up', players: ALL }] },
   // Brodick: 18 holes, par 64 off the yellows (the 2nd is a par 4 off the
@@ -88,7 +88,7 @@ export const ROUNDS: Round[] = [
   // yellows are very short (3,220 yds), the whites 3,830 — switch in settings.
   { id: 'r4', n: 4, dow: 'Fri', dnum: 25, mon: 'Sept', slot: 'am', format: 'stableford', pairs: false,
     club: 'Corrie Golf Club', short: 'Corrie', town: 'Sannox', address: 'Sannox, Isle of Arran, KA27 8JD',
-    par: 62, cr: 58.4, slope: 90, tees: 'yellow', loops: 2,
+    par: 62, cr: 58.4, slope: 90, tees: 'yellow', courseHoles: 9,
     holes: twice([3,3,4,3,3,4,4,3,4], [17,3,5,13,11,1,9,15,7], [127,134,219,130,97,238,302,138,225]),
     altTees: [{ key: 'white', label: 'white', cr: 60.6, slope: 96, yds: twiceYds([135,199,248,171,124,309,307,156,266]) }],
     groups: [{ tee: 'Turn up', players: ALL }] },
@@ -109,7 +109,7 @@ export const ROUNDS: Round[] = [
   // 1st was rebuilt in 2015 — older cards say 319 yds; the current one 303.
   { id: 'r6', n: 6, dow: 'Sat', dnum: 26, mon: 'Sept', slot: 'am', format: 'stableford', pairs: false,
     club: 'Machrie Bay Golf Club', short: 'Machrie Bay', town: 'Machrie', address: 'Machrie, Isle of Arran, KA27 8DY',
-    par: 66, cr: 62.8, slope: 104, tees: 'white', loops: 2,
+    par: 66, cr: 62.8, slope: 104, tees: 'white', courseHoles: 9,
     holes: twice([4,3,3,4,3,4,4,4,4], [5,7,11,1,9,17,13,3,15], [303,174,185,343,199,280,280,252,246]),
     altTees: [{ key: 'yellow', label: 'yellow', cr: 61.4, slope: 100, yds: twiceYds([297,146,185,336,168,254,278,219,244]) }],
     groups: [{ tee: 'Turn up', players: ALL }] },
@@ -192,8 +192,11 @@ export const colour = (i: number) => AVATAR_COLOURS[((i % AVATAR_COLOURS.length)
 export const gname = (grp: Group, t: number) => grp.name || `Group ${t + 1}`;
 // The day a round is on, as a short label: 'Fri', or 'Fri am' when the day has two.
 export const dayLabel = (r: Round) => r.dow + (r.slot ? ` ${r.slot}` : '');
-// '18 holes', '12 holes', or '9 holes, twice'.
-export const holesLabel = (r: Round) => r.loops === 2 ? `${r.holes.length / 2} holes, twice` : `${r.holes.length} holes`;
+// '18 holes', '12 holes', '9 holes, twice', '11 holes, played as 18'.
+export const holesLabel = (r: Round) => {
+  const n = r.holes.length, c = r.courseHoles ?? n;
+  return c === n ? `${n} holes` : c * 2 === n ? `${c} holes, twice` : `${c} holes, played as ${n}`;
+};
 // Everyone plays together every round: no groups to draw, name or switch between.
 export const ONE_GROUP = ROUNDS.every((r) => r.groups.length === 1);
 export const ord = (n: number) => n + (['st', 'nd', 'rd'][n - 1] || 'th');
