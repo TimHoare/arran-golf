@@ -130,3 +130,39 @@ describe('results', () => {
     expect(st.every((r) => r.bonusKept === 0)).toBe(true);
   });
 });
+
+// Shiskine is twelve holes: everything hole-shaped has to follow the round's
+// own length rather than assume 18. A stand-in twelve is spliced into ROUNDS
+// for these tests and taken out again.
+import { afterEach } from 'vitest';
+import { indexTable } from '../lib/scoring';
+describe('a twelve-hole round', () => {
+  const twelve = {
+    ...ROUNDS[0], id: 'x12', n: 99, club: 'Twelve', short: 'Twelve', par: 42, cr: 41.0, slope: 110,
+    holes: [4,3,4,4,3,4, 3,4,4,3,3,3].map((par, i) => ({ n: i + 1, par, si: [1,11,3,5,9,7, 12,2,4,10,6,8][i], yds: null })),
+  };
+  afterEach(() => { const i = ROUNDS.findIndex((r) => r.id === 'x12'); if (i >= 0) ROUNDS.splice(i, 1); });
+  const add = () => { ROUNDS.push(twelve); return defaultState(); };
+
+  it('scales the course handicap by 12/18 and gives shots off stroke indexes 1–12', () => {
+    add();
+    const S = defaultState();
+    expect(courseHandicap(S, 15.0, 'x12')).toBe(Math.round(15.0 * (12 / 18) * (110 / 113) + (41.0 - 42)));
+    expect(shotsOn(13, 1, 12)).toBe(2);   // 13 over twelve holes: two on SI 1, one elsewhere
+    expect(shotsOn(13, 2, 12)).toBe(1);
+    expect(shotsOn(5, 6, 12)).toBe(0);
+  });
+  it('is complete at twelve, counts back over 6 / 4 / 2, and swipes stop at the 12th', () => {
+    const S = add();
+    const gross = Array(12).fill(4);
+    const t = tally('x12', [...gross, ...Array(6).fill(null)], 0);
+    expect(t.rows).toHaveLength(12);
+    expect(t.complete).toBe(true);
+    expect(countback(t)).toEqual([6, 8, 10].map((from) => t.rows.slice(from).reduce((a, r) => a + (r.pts ?? 0), 0)));
+    expect(tally('x12', [...Array(11).fill(4), null], 0).complete).toBe(false);
+    S.scores.x12 = Object.fromEntries(PIDS.map((pid) => [pid, Array(12).fill(4)]));
+    expect(firstUnfinishedHole(S, 'x12', 0)).toBe(12);
+    // and it settles the index like any other round
+    expect(indexTable(S).p1.find((h) => h.round.id === 'x12')!.applied).toBe(true);
+  });
+});

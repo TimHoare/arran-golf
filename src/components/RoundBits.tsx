@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { PL, PLAYERS, R, first, pName, gname, ord, type Round } from '../data/trip';
 import { RULES } from '../data/trip';
 import {
-  groupsFor, pairPointsFor, pairTotals, playerTally, roundStatus, stablefordResults, teamTally, phFor, scrambleResults, shotsOn, trim,
+  groupsFor, half, pairPointsFor, pairTotals, playerTally, roundStatus, stablefordResults, teamTally, phFor, scrambleResults, shotsOn, trim,
   type Tally,
 } from '../lib/scoring';
 import { setPairDraw } from '../lib/store';
@@ -365,22 +365,22 @@ export function LiveScorecard({ r, group, selHole, onHole, myPh = null }: { r: R
           </thead>
           <tbody>
             {r.holes.flatMap((hh, i) => {
-              const shots = myPh !== null ? Math.max(0, shotsOn(myPh, hh.si)) : 0;
+              const shots = myPh !== null ? Math.max(0, shotsOn(myPh, hh.si, r.holes.length)) : 0;
               const tr = (
                 <tr key={hh.n} className={hh.n === selHole ? 'cur' : ''} onClick={onHole ? () => onHole(hh.n) : undefined} style={onHole ? { cursor: 'pointer' } : undefined}>
                   <td>{hh.n}</td><td>{hh.par}</td><td>{shots ? <span className={`si-pill s${Math.min(shots, 2)}`}>{hh.si}</span> : hh.si}</td>
                   {cols.map((c, k) => cell(c.tally.rows[i], k))}
                 </tr>
               );
-              return i === 8 ? [tr, sumRow('Out', 0, 9)] : [tr];
+              return i === half(r) - 1 ? [tr, sumRow('Out', 0, half(r))] : [tr];
             })}
-            {sumRow('In', 9, 18)}
-            {sumRow('Total', 0, 18)}
+            {sumRow('In', half(r), r.holes.length)}
+            {sumRow('Total', 0, r.holes.length)}
           </tbody>
         </table>
       </div>
       <GrossLegend />
-      {myPh !== null && myPh > 18 && (
+      {myPh !== null && myPh > r.holes.length && (
         <p className="small muted si-legend">
           <span className="lg"><span className="si-pill s1">SI</span> one shot</span>
           <span className="lg"><span className="si-pill s2">SI</span> two shots</span>

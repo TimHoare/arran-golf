@@ -7,7 +7,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { BITS, PL, R, RULES, first, gname, ord } from '../data/trip';
 import { BIT_KINDS } from '../lib/state';
 import {
-  bitsOf, bonusGoneBy, bonusHoleFor, courseHandicap, flightName, flightsFor, fmt1, fmtMoney, groupBitTally, groupsFor, groupsSet,
+  bitsOf, bonusGoneBy, bonusHoleFor, courseHandicap, flightName, flightsFor, fmt1, fmtMoney, groupBitTally, groupsFor, groupsSet, half,
   indexBefore, indexHistory, pairTotals, phFor, playerTally, roundStatus, scrambleResults, stablefordResults, teamHandicap,
   teamTally, trim, type Tally,
 } from '../lib/scoring';
@@ -58,7 +58,7 @@ export function PlayerRoundPage() {
     .map((k) => ({ k, n: bitGroup < 0 ? 0 : bitsOf(S, r.id, bitGroup, k)[i]?.counts[who] || 0 }))
     .filter((x) => x.n > 0);
   const bitTotals = (RULES.sideBets ? BIT_KINDS : []).map((k) => {
-    const by = members.map((who) => ({ who, n: Array.from({ length: 18 }, (_, i) => bitsOn(i, who).find((x) => x.k === k)?.n || 0).reduce((a, b) => a + b, 0) }));
+    const by = members.map((who) => ({ who, n: Array.from({ length: r.holes.length }, (_, i) => bitsOn(i, who).find((x) => x.k === k)?.n || 0).reduce((a, b) => a + b, 0) }));
     const grpT = bitGroup < 0 ? null : groupBitTally(S, r.id, bitGroup, k);
     const last = grpT && grpT.total > 0 && grpT.last && members.includes(grpT.last) ? grpT.last : null;
     return { k, by, n: by.reduce((a, x) => a + x.n, 0), last, owes: grpT ? grpT.total * S.stakes[k] : 0 };
@@ -182,15 +182,15 @@ export function PlayerRoundPage() {
                   {extrasOn && <td className="x">{extras(i)}</td>}
                 </tr>
               );
-              return i === 8 ? [tr, sumRow('Out', 0, 9)] : [tr];
+              return i === half(r) - 1 ? [tr, sumRow('Out', 0, half(r))] : [tr];
             })}
-            {sumRow('In', 9, 18)}
-            {sumRow('Total', 0, 18)}
+            {sumRow('In', half(r), r.holes.length)}
+            {sumRow('Total', 0, r.holes.length)}
           </tbody>
         </table>
       </div>
       <GrossLegend />
-      {ph !== null && ph > 18 && (
+      {ph !== null && ph > r.holes.length && (
         <p className="small muted si-legend">
           <span className="lg"><span className="si-pill s1">SI</span> one shot</span>
           <span className="lg"><span className="si-pill s2">SI</span> two shots</span>

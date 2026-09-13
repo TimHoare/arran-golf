@@ -17,6 +17,11 @@ export function groupsFor(S: TripState, rid: string): Group[] {
 // because the whole field goes off together.
 export const groupsSet = (S: TripState, rid: string) => !!S.groups[rid] || R(rid)!.groups.length === 1;
 
+// Rounds aren't all 18 holes (Shiskine is 12; the nine-holers are played twice
+// as 18). Scores are stored as 18 slots regardless; a round only reads its own.
+export const holeCount = (rid: string) => R(rid)!.holes.length;
+// Where the card splits into its two halves: 9 for 18 holes, 6 for 12.
+export const half = (r: Round) => r.holes.length / 2;
 export const blank18 = (): HoleScores => Array(18).fill(null);
 export const holesOf = (S: TripState, rid: string, pid: string): HoleScores => S.scores[rid]?.[pid] || blank18();
 export const teamHoles = (S: TripState, rid: string, t: number): HoleScores => S.scramble[rid]?.[t] || blank18();
@@ -30,18 +35,22 @@ export function teeFor(S: TripState, rid: string): TeeSet {
 }
 
 // ---------- Handicap maths ----------
+// WHS: index × slope/113 + (CR − par), with CR and par for the holes being
+// played. A shorter round scales the index the same way a 9-hole one does
+// (half the index for nine holes; two-thirds for Shiskine's twelve).
 export function courseHandicap(S: TripState, index: number, rid: string) {
   const t = teeFor(S, rid);
-  return Math.round(index * (t.slope / 113) + (t.cr - R(rid)!.par));
+  return Math.round(index * (holeCount(rid) / 18) * (t.slope / 113) + (t.cr - R(rid)!.par));
 }
 export function playingHandicap(S: TripState, index: number, rid: string) {
   return Math.round(courseHandicap(S, index, rid) * (RULES.allowance / 100));
 }
-// Shots received on a hole of stroke index si for playing handicap ph.
-export function shotsOn(ph: number, si: number) {
-  if (ph >= 0) return Math.floor(ph / 18) + (si <= ph % 18 ? 1 : 0);
+// Shots received on a hole of stroke index si for playing handicap ph, over a
+// round of n holes (stroke indexes run 1–n).
+export function shotsOn(ph: number, si: number, n = 18) {
+  if (ph >= 0) return Math.floor(ph / n) + (si <= ph % n ? 1 : 0);
   const give = -ph;
-  return -(Math.floor(give / 18) + (si > 18 - (give % 18) ? 1 : 0));
+  return -(Math.floor(give / n) + (si > n - (give % n) ? 1 : 0));
 }
 // gross 0 = picked the ball up: the hole was played but there's no score, so
 // no points — distinct from null (not entered yet).
@@ -57,7 +66,7 @@ export interface Tally { rows: TallyRow[]; played: number; pts: number; strokes:
 export function tally(rid: string, gross: HoleScores, ph: number, bonusHole: number | null = null): Tally {
   const r = R(rid)!;
   const rows = r.holes.map((h, i) => {
-    const shots = shotsOn(ph, h.si);
+    const shots = shotsOn(ph, h.si, r.holes.length);
     const g = gross[i];
     const base = holePoints(g, h.par, shots);
     const bonus = i === bonusHole;
@@ -67,7 +76,7 @@ export function tally(rid: string, gross: HoleScores, ph: number, bonusHole: num
   const pts = rows.reduce((a, x) => a + (x.pts ?? 0), 0);
   const strokes = rows.reduce((a, x) => a + (x.gross ?? 0), 0);
   const pickups = rows.filter((x) => isPickup(x.gross)).length;
-  return { rows, played, pts, strokes, pickups, complete: played === 18 };
+  return { rows, played, pts, strokes, pickups, complete: played === r.holes.length };
 }
 
 // ---------- Bonus balls ----------
@@ -82,7 +91,8 @@ export function bonusHoleFor(S: TripState, rid: string, pid: string): number | n
   if (bb?.lost && roundIdx(bb.lost) <= roundIdx(rid)) return null;
   const h = bb?.used[rid];
   if (h !== undefined) return h;
-  return R(rid)!.format === 'stableford' && holesOf(S, rid, pid)[17] !== null ? 17 : null;
+  const last = holeCount(rid) - 1;
+  return R(rid)!.format === 'stableford' && holesOf(S, rid, pid)[last] !== null ? last : null;
 }
 // Ball lost in this round or any earlier one → no more 2×s from here on.
 export const bonusGoneBy = (S: TripState, rid: string, pid: string): boolean => {
@@ -178,9 +188,12 @@ function award<T extends { place?: number; points?: number; tied?: boolean }>(
   }
 }
 
-// Countback for individual ties: points on the back 9, then back 6, then back 3.
-export const countback = (t: { rows: TallyRow[] }): number[] =>
-  [9, 12, 15].map((from) => t.rows.slice(from).reduce((a, x) => a + (x.pts ?? 0), 0));
+// Countback for individual ties: points on the back half, then the back third,
+// then the back sixth — 9 / 6 / 3 holes of 18, 6 / 4 / 2 of 12.
+export const countback = (t: { rows: TallyRow[] }): number[] => {
+  const n = t.rows.length;
+  return [n / 2, (2 * n) / 3, (5 * n) / 6].map((from) => t.rows.slice(Math.round(from)).reduce((a, x) => a + (x.pts ?? 0), 0));
+};
 
 export interface StablefordRow extends Tally { pid: string; place?: number; points?: number; tied?: boolean }
 export function stablefordResults(S: TripState, rid: string): StablefordRow[] {
@@ -295,8 +308,9 @@ export function firstUnfinishedHole(S: TripState, rid: string, group: number) {
   const done = (n: number) => r.format === 'scramble'
     ? (flightsFor(S, rid)[group]?.teams ?? []).every((t) => teamHoles(S, rid, t)[n - 1] !== null)
     : groupsFor(S, rid)[group].players.every((pid) => holesOf(S, rid, pid)[n - 1] !== null);
-  for (let n = 1; n <= 18; n++) if (!done(n)) return n;
-  return 18;
+  const last = r.holes.length;
+  for (let n = 1; n <= last; n++) if (!done(n)) return n;
+  return last;
 }
 
 // ---------- Side bets (cuckoos · camels · fish · three-putts · lost balls) ----------

@@ -2,7 +2,7 @@
 // everyone's course handicaps, the course card, and pairs/scramble widgets.
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { R, PL, RULES, first, gname } from '../data/trip';
-import { courseHandicap, groupsFor, groupsSet, indexBefore, phFor, roundStatus, shotsOn, teamHandicap, teeFor, fmt1 } from '../lib/scoring';
+import { courseHandicap, groupsFor, groupsSet, half, indexBefore, phFor, roundStatus, shotsOn, teamHandicap, teeFor, fmt1 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
@@ -110,21 +110,21 @@ export function RoundPage() {
           <thead><tr><th>Hole</th><th>Par</th><th>{yardsKnown ? 'Yards' : ''}</th><th>SI</th></tr></thead>
           <tbody>
             {r.holes.flatMap((h, i) => {
-              const shots = myPh !== null ? Math.max(0, shotsOn(myPh, h.si)) : 0;
+              const shots = myPh !== null ? Math.max(0, shotsOn(myPh, h.si, r.holes.length)) : 0;
               const tr = (
                 <tr key={h.n}>
                   <td>{h.n}</td><td>{h.par}</td><td>{yds?.[i] ?? ''}</td>
                   <td>{shots ? <span className={`si-pill s${Math.min(shots, 2)}`}>{h.si}</span> : h.si}</td>
                 </tr>
               );
-              return i === 8 ? [tr, nine('Out', 0, 9)] : [tr];
+              return i === half(r) - 1 ? [tr, nine('Out', 0, half(r))] : [tr];
             })}
-            {nine('In', 9, 18)}
-            {nine('Total', 0, 18)}
+            {nine('In', half(r), r.holes.length)}
+            {nine('Total', 0, r.holes.length)}
           </tbody>
         </table>
       </div>
-      {myPh !== null && myPh > 18 && (
+      {myPh !== null && myPh > r.holes.length && (
         <p className="small muted si-legend">
           <span className="lg"><span className="si-pill s1">SI</span> one shot</span>
           <span className="lg"><span className="si-pill s2">SI</span> two shots</span>

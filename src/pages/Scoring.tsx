@@ -172,7 +172,7 @@ function Slide({ S, r, group, h, readOnly, myPh }: { S: TripState; r: Round; gro
     ? <><b>{shots} shot{shots > 1 ? 's' : ''}</b> · </>
     : null;
   // Your shots here, marked on the SI the same way as the course card.
-  const myShots = myPh !== null ? Math.max(0, shotsOn(myPh, h.si)) : 0;
+  const myShots = myPh !== null ? Math.max(0, shotsOn(myPh, h.si, r.holes.length)) : 0;
 
   return (
     <section className="slide" data-slide={h.n}>
@@ -240,7 +240,8 @@ export function ScoringPage() {
   const uname = (t: number) => (scramble && r ? flightName(S, r.id, t) : gname(groups[t], t));
 
   const holeN = Number(hole);
-  const valid = holeN >= 1 && holeN <= 18;
+  const last = r?.holes.length ?? 18;
+  const valid = holeN >= 1 && holeN <= last;
 
   // Swipe carousel: keep scroll position in step with the hole in the URL.
   const swipeRef = useRef<HTMLDivElement>(null);
@@ -257,7 +258,7 @@ export function ScoringPage() {
   if (!valid) return <Navigate to={`/round/${r.id}/score/${firstUnfinishedHole(S, r.id, myGroup)}`} replace />;
 
   const goHole = (n: number) => {
-    if (n >= 1 && n <= 18) navigate(`/round/${r.id}/score/${n}`, { replace: true });
+    if (n >= 1 && n <= last) navigate(`/round/${r.id}/score/${n}`, { replace: true });
   };
   const onScroll = () => {
     clearTimeout(settleT.current);
