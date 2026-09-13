@@ -23,6 +23,9 @@ async function fetchAll({ name, key }) {
   return rows;
 }
 
+// No database yet (src/config.ts still blank): nothing to back up, not a failure.
+if (!url) { console.log('No Supabase project configured — skipping backup'); process.exit(0); }
+
 mkdirSync(dir, { recursive: true });
 let failed = false;
 for (const t of TABLES) {
