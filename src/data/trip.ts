@@ -1,5 +1,4 @@
 // Everything fixed about the trip: the Isle of Arran, 23–26 September 2026.
-// Still TBC: tee times, and the first tee for the countdown.
 import type { BitKind } from '../lib/state';
 
 // The trip itself: names the app, keys this phone's storage and the shared
@@ -10,7 +9,7 @@ export const TRIP = {
   name: 'Arran',
   year: '2026',
   dates: 'Wed 23 – Sat 26 September',
-  firstTee: new Date(2026, 8, 23, 9, 0),   // TBC: Lochranza tee time on the Wednesday
+  firstTee: new Date(2026, 8, 23),   // Wednesday — Lochranza is turn-up-and-play, so the day itself
 };
 
 export interface Hole { n: number; par: number; si: number; yds: number | null }
@@ -44,7 +43,8 @@ const twiceYds = (yds: number[]) => [...yds, ...yds];
 
 // Seven rounds over four days, Wednesday to Saturday: one on the first day,
 // then two a day. Everyone plays together, so each round is a single group off
-// one tee. Tee times TBC. Cards are the clubs' own where published, otherwise
+// one tee; Lochranza, Corrie and Machrie Bay take no bookings, you turn up.
+// Cards are the clubs' own where published, otherwise
 // the aggregators that agree with each other — each round's comment says
 // which, and what to double-check in the clubhouse.
 const ALL = ['p1', 'p2', 'p3', 'p4'];
@@ -58,7 +58,7 @@ export const ROUNDS: Round[] = [
     club: 'Lochranza Golf', short: 'Lochranza', town: 'Lochranza', address: 'Lochranza Campsite, Lochranza, Isle of Arran, KA27 8HL',
     par: 54, cr: 52.1, slope: 87, tees: 'white',
     holes: card(Array(18).fill(3), [1,7,5,17,9,3,11,15,13, 2,8,6,18,10,4,12,16,14], [110,67,77,87,98,87,116,91,103, 73,110,67,77,87,98,87,116,91]),
-    groups: [{ tee: 'TBC', players: ALL }] },
+    groups: [{ tee: 'Turn up', players: ALL }] },
   // Brodick: 18 holes, par 64 off the yellows (the 2nd is a par 4 off the
   // whites, par 65 — so no white tee option here, the app can't change a
   // hole's par per tee). Card from the club's own scorecard PDF (Feb 2026).
@@ -68,7 +68,7 @@ export const ROUNDS: Round[] = [
     club: 'Brodick Golf Club', short: 'Brodick', town: 'Brodick', address: 'Cloy Bridge, Brodick, Isle of Arran, KA27 8DL',
     par: 64, cr: 63.2, slope: 109, tees: 'yellow',
     holes: card([4,3,3,3,5,4,3,3,4, 4,4,4,3,3,3,4,4,3], [5,15,7,17,1,13,11,3,9, 10,2,16,6,18,8,14,4,12], [387,192,119,125,460,265,156,167,373, 365,356,251,185,162,118,272,295,220]),
-    groups: [{ tee: 'TBC', players: ALL }] },
+    groups: [{ tee: '10:00', players: ALL }] },
   // Lamlash: 18 holes, par 64, steep and famous for long par 3s. Pars and
   // yards from the club's hole-by-hole page, SIs from three aggregators that
   // agree. Yellow 61.1/106 and white 63.9/109 are third-party figures (the
@@ -79,7 +79,7 @@ export const ROUNDS: Round[] = [
     par: 64, cr: 63.9, slope: 109, tees: 'white',
     holes: card([4,3,4,3,3,4,4,4,4, 4,4,3,3,3,4,3,3,4], [9,5,1,15,3,7,13,17,11, 12,14,2,16,6,8,18,4,10], [346,184,387,174,201,330,283,256,349, 241,263,224,186,210,284,98,201,293]),
     altTees: [{ key: 'yellow', label: 'yellow', cr: 61.1, slope: 106, yds: [335,171,351,109,168,317,208,210,271, 198,221,219,178,204,239,94,165,287] }],
-    groups: [{ tee: 'TBC', players: ALL }] },
+    groups: [{ tee: '14:44', players: ALL }] },
   // Corrie: 9 holes played twice, par 62. Card and ratings from the club's
   // course page (18-hole figures: yellow 58.4/90, white 60.6/96). The club
   // card gives each hole two stroke indexes — the odd ones first time round,
@@ -90,7 +90,7 @@ export const ROUNDS: Round[] = [
     par: 62, cr: 58.4, slope: 90, tees: 'yellow',
     holes: twice([3,3,4,3,3,4,4,3,4], [17,3,5,13,11,1,9,15,7], [127,134,219,130,97,238,302,138,225]),
     altTees: [{ key: 'white', label: 'white', cr: 60.6, slope: 96, yds: twiceYds([135,199,248,171,124,309,307,156,266]) }],
-    groups: [{ tee: 'TBC', players: ALL }] },
+    groups: [{ tee: 'Turn up', players: ALL }] },
   // Whiting Bay: 18 holes, par 63, nine par 3s. Yellow 61.4/97 from the club's
   // Scottish Golf slope panel (Nov 2020); white 62.5/99. SI for holes 2 and 5
   // are 7 and 5 per the printed card and two other sources — the club's web
@@ -100,7 +100,7 @@ export const ROUNDS: Round[] = [
     par: 63, cr: 61.4, slope: 97, tees: 'yellow',
     holes: card([4,3,3,3,3,4,3,4,4, 4,3,4,3,4,4,3,3,4], [17,7,3,13,5,15,11,1,9, 10,2,12,4,18,14,8,16,6], [218,186,150,83,207,252,229,346,212, 259,166,315,221,229,307,202,127,383]),
     altTees: [{ key: 'white', label: 'white', cr: 62.5, slope: 99, yds: [225,195,178,112,209,265,231,355,252, 313,201,322,249,254,323,203,131,433] }],
-    groups: [{ tee: 'TBC', players: ALL }] },
+    groups: [{ tee: '14:45', players: ALL }] },
   // Machrie Bay: 9 holes played twice, par 66, split by the shore road. Yards,
   // pars and SIs from 18Birdies and golf4holland (which agree hole for hole;
   // odd SIs first time round, even second), names from the club. 18-hole
@@ -111,7 +111,7 @@ export const ROUNDS: Round[] = [
     par: 66, cr: 62.8, slope: 104, tees: 'white',
     holes: twice([4,3,3,4,3,4,4,4,4], [5,7,11,1,9,17,13,3,15], [303,174,185,343,199,280,280,252,246]),
     altTees: [{ key: 'yellow', label: 'yellow', cr: 61.4, slope: 100, yds: twiceYds([297,146,185,336,168,254,278,219,244]) }],
-    groups: [{ tee: 'TBC', players: ALL }] },
+    groups: [{ tee: 'Turn up', players: ALL }] },
   // Shiskine: 12 holes, par 42 — visitors always play 12, off the yellows
   // (whites are medal only). Card from the club's course page. The club
   // publishes no 12-hole rating: its WHS figures (yellow 62.0/97, white
@@ -124,7 +124,7 @@ export const ROUNDS: Round[] = [
     par: 42, cr: 42.0, slope: 97, tees: 'yellow',
     holes: card([4,4,3,3,3,4, 3,4,5,3,3,3], [5,1,9,11,7,3, 10,6,2,12,4,8], [368,357,122,137,212,266, 162,220,477,150,196,120]),
     altTees: [{ key: 'white', label: 'white', cr: 42.0, slope: 99, yds: [385,380,127,147,244,274, 173,250,509,168,209,126] }],
-    groups: [{ tee: 'TBC', players: ALL }] },
+    groups: [{ tee: '14:30', players: ALL }] },
 ];
 
 // Handicap index each player starts the trip on.

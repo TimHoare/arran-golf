@@ -48,6 +48,10 @@ describe('trip shape', () => {
       }
     }
   });
+  it('every round has its tee time, or says to turn up', () => {
+    expect(ROUNDS.map((r) => r.groups[0].tee)).toEqual(['Turn up', '10:00', '14:44', 'Turn up', '14:45', 'Turn up', '14:30']);
+    expect(ROUNDS.every((r) => r.groups.length === 1 && r.groups[0].players.length === 4)).toBe(true);
+  });
   it('one group of four needs no draw, so scoring is open from the start', () => {
     const S = defaultState();
     for (const r of ROUNDS) expect(groupsSet(S, r.id)).toBe(true);

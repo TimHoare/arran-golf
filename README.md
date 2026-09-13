@@ -71,5 +71,4 @@ Rounds have their own hole count: Shiskine's twelve holes get twelve slides, a 6
 ## Still to fill in
 
 1. **Supabase.** Create the trip's own project, run `supabase-schema.sql` in its SQL editor, put the project URL and publishable key in `src/config.ts`. Until then the app runs in single-phone mode.
-2. **Tee times** — each round's `groups[0].tee` in `src/data/trip.ts`, and `TRIP.firstTee` for the countdown.
-3. **Photos** for Jonny and George (optional): `src/assets/avatars/p2.webp` and `p4.webp`. Liam and Adam's carry over from Yorkshire.
+2. **Photos for Jonny and George (optional): `src/assets/avatars/p2.webp` and `p4.webp`. Liam and Adam's carry over from Yorkshire.
