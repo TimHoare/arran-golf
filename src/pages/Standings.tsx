@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ROUNDS, RULES, first, pName, PL } from '../data/trip';
+import { ROUNDS, RULES, dayLabel, first, ord, pName, PL } from '../data/trip';
 import {
   currentIndex, fmt1, playerTally, roundPlace, roundPoints, roundStatus,
   scrambleResults, signed, standings, trim,
@@ -54,7 +54,7 @@ export function StandingsPage() {
       <div className="card table-wrap">
         <table className="rounds-table">
           <thead>
-            <tr><th>Player</th>{ROUNDS.map((r) => <th key={r.id} title={r.club}>{r.dow}</th>)}<th>Total</th></tr>
+            <tr><th>Player</th>{ROUNDS.map((r) => <th key={r.id} title={r.club}>{dayLabel(r)}</th>)}<th>Total</th></tr>
           </thead>
           <tbody>
             {st.map((row) => (
@@ -65,7 +65,7 @@ export function StandingsPage() {
                   const card = `/player/${row.pid}/round/${rd.id}`;
                   if (rd.format === 'scramble') {
                     const sr = scrambleResults(S, rd.id).rows[row.pid];
-                    return <td key={rd.id}><Link to={card}>{sr ? <><span className={sr.won ? 'win' : ''}>{sr.place}{['st', 'nd', 'rd'][sr.place - 1] || 'th'}{sr.tie ? '=' : ''}</span><span className="pt">{trim(sr.points)}</span></> : '·'}</Link></td>;
+                    return <td key={rd.id}><Link to={card}>{sr ? <><span className={sr.won ? 'win' : ''}>{ord(sr.place)}{sr.tie ? '=' : ''}</span><span className="pt">{trim(sr.points)}</span></> : '·'}</Link></td>;
                   }
                   const t = playerTally(S, rd.id, row.pid);
                   const rp = roundPoints(S, rd.id, row.pid);
@@ -77,7 +77,7 @@ export function StandingsPage() {
           </tbody>
         </table>
       </div>
-      <p className="small muted" style={{ marginTop: 6 }}>* round in progress · 🎱 bonus ball kept all trip: +{RULES.bonusKeep} in the total, added once the last round is in</p>
+      <p className="small muted" style={{ marginTop: 6 }}>* round in progress{RULES.bonusBalls && <> · 🎱 bonus ball kept all trip: +{RULES.bonusKeep} in the total, added once the last round is in</>}</p>
     </>
   );
 }

@@ -1,4 +1,5 @@
 // State shapes and localStorage persistence.
+import { TRIP } from '../data/trip';
 export type HoleScores = (number | null)[];
 export interface PairDraw { pairs: string[][]; revealed: boolean }
 
@@ -33,10 +34,10 @@ export interface TripState {
 // saved (state and outbox alike), so a phone that last ran old sync code
 // starts clean from the server instead of replaying stale local data.
 // Who you are and where you were stay put across generations.
-export const STORE_KEY = 'yorkshire-golf-2026-g2';
-export const ME_KEY = 'yorkshire-golf-2026-me';
+export const STORE_KEY = TRIP.slug + '-g2';
+export const ME_KEY = TRIP.slug + '-me';
 export const OUTBOX_KEY = STORE_KEY + '-outbox';
-export const ROUTE_KEY = 'yorkshire-golf-2026-route';
+export const ROUTE_KEY = TRIP.slug + '-route';
 
 export const defaultStakes = (): Stakes => ({ cuckoo: 10, camel: 10, fish: 10, threeputt: 10, lostball: 10 });
 export function defaultState(): TripState {

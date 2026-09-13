@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigationType } from 'react-router-dom';
-import { PL, R } from './data/trip';
+import { PL, R, TRIP } from './data/trip';
 import { ROUTE_KEY } from './lib/state';
 import { recordNav, teamOrFirst } from './lib/nav';
 import { useStore } from './lib/useStore';
@@ -24,7 +24,7 @@ function titleFor(path: string) {
     p[0] === 'standings' ? 'Standings' :
     p[0] === 'round' && R(p[1]) ? (p[2] === 'score' ? 'Scores · ' + R(p[1])!.short : R(p[1])!.short) :
     'Trip';
-  return base + ' · Yorkshire 2026';
+  return `${base} · ${TRIP.name} ${TRIP.year}`;
 }
 
 // Remember where we are (so a PWA cold start reopens the same page), keep the

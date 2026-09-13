@@ -3,7 +3,7 @@
 // in the URL (replace, not push) so refresh restores it and history stays clean.
 import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { R, PL, first, gname, type Hole, type Round } from '../data/trip';
+import { R, PL, RULES, first, gname, type Hole, type Round } from '../data/trip';
 import {
   bonusGoneBy, bonusHoleFor, firstUnfinishedHole, flightName, flightsFor, groupsFor, holesOf, playerTally,
   phFor, relPar, shotsOn, teamHandicap, teamHoles, teamTally,
@@ -209,9 +209,9 @@ function Slide({ S, r, group, h, readOnly, myPh }: { S: TripState; r: Round; gro
               );
             })}
       </div>
-      {!scramble && <BonusPanel S={S} r={r} players={g.players} holeIdx={i} readOnly={readOnly} />}
-      <HoleBitsPanel rid={r.id} group={group} holeIdx={i}
-        players={scramble ? flightsFor(S, r.id)[group].players : g.players} readOnly={readOnly} />
+      {RULES.bonusBalls && !scramble && <BonusPanel S={S} r={r} players={g.players} holeIdx={i} readOnly={readOnly} />}
+      {RULES.sideBets && <HoleBitsPanel rid={r.id} group={group} holeIdx={i}
+        players={scramble ? flightsFor(S, r.id)[group].players : g.players} readOnly={readOnly} />}
     </section>
   );
 }
@@ -311,7 +311,7 @@ export function ScoringPage() {
         {r.holes.map((h) => <Slide key={h.n} S={S} r={r} group={group} h={h} readOnly={!canEdit} myPh={myPh} />)}
       </div>
       <LiveScorecard r={r} group={group} selHole={holeN} onHole={goHole} myPh={myPh} />
-      <GroupBet r={r} group={group} title={uname(group)} />
+      {RULES.sideBets && <GroupBet r={r} group={group} title={uname(group)} />}
     </>
   );
 }

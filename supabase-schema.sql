@@ -1,4 +1,4 @@
--- Yorkshire Golf Week — database setup.
+-- Golf week — database setup.
 -- Run this once in your Supabase project: Dashboard → SQL Editor → paste → Run.
 -- Safe to re-run.
 

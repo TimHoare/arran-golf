@@ -1,7 +1,7 @@
 // App chrome: header (wordmark, sync pill, settings), bottom tabs, toast.
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { PLAYERS } from '../data/trip';
+import { PLAYERS, TRIP } from '../data/trip';
 import { hasSync } from '../lib/store';
 import { useStore } from '../lib/useStore';
 import { onToast } from '../lib/toast';
@@ -36,8 +36,8 @@ export function Header({ onSettings }: { onSettings: () => void }) {
     <header className="top" ref={ref}>
       <div className="top-inner">
         <Link className="wordmark" to="/trip" aria-label="Home">
-          <span className="wm-line1">Yorkshire <i>2026</i></span>
-          <span className="wm-line2">Mon 7 – Fri 11 September · {PLAYERS.length} golfers</span>
+          <span className="wm-line1">{TRIP.name} <i>{TRIP.year}</i></span>
+          <span className="wm-line2">{TRIP.dates} · {PLAYERS.length} golfers</span>
         </Link>
         <div className="top-actions">
           <SyncPill />

@@ -1,7 +1,7 @@
 // Round info page: course facts, map link, your course handicap, groups with
 // everyone's course handicaps, the course card, and pairs/scramble widgets.
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { R, PL, first, gname } from '../data/trip';
+import { R, PL, RULES, first, gname } from '../data/trip';
 import { courseHandicap, groupsFor, indexBefore, phFor, roundStatus, shotsOn, teamHandicap, teeFor, fmt1 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { Avatar } from '../components/Avatar';
@@ -131,7 +131,7 @@ export function RoundPage() {
         </p>
       )}
 
-      <BetsSection r={r} />
+      {RULES.sideBets && <BetsSection r={r} />}
       {r.pairs && <PairsBox r={r} />}
       {scramble && <ScrambleResult r={r} />}
     </>

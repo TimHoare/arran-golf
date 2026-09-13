@@ -164,3 +164,109 @@ describe('standings', () => {
     expect(b).toMatchObject({ pid: 'p1', rank: 2, pts: 18, stab: 75 });
   });
 });
+
+// The knobs a different trip turns: place-based index drift, and the extras
+// switched off. RULES is a plain object, so each test sets what it needs and
+// puts it back.
+import { afterEach } from 'vitest';
+import { RULES, ROUNDS, dayLabel, type IndexAdjust, type Round } from '../data/trip';
+import { bonusHoleFor, describeRules, indexTable } from '../lib/scoring';
+
+const saved = { ...RULES, indexAdjust: RULES.indexAdjust };
+afterEach(() => { Object.assign(RULES, saved); });
+
+describe('index by finishing place', () => {
+  const byPlace: IndexAdjust = { mode: 'place', byPlace: [-1, -0.5, 0.5, 1] };
+  // Four of the eight play; the other four never start, so the round can't settle.
+  const four = ['p1', 'p2', 'p3', 'p4'];
+  const field = (S: TripState, rid: string, deltas: Record<string, number[]>) => {
+    S.scores[rid] = {};
+    for (const pid of PIDS) S.scores[rid][pid] = netParFor(S, rid, pid, deltas[pid] ?? []);
+  };
+  it('moves nobody until every card is in', () => {
+    RULES.indexAdjust = byPlace;
+    const S = defaultState();
+    S.scores.d1 = {};
+    for (const pid of four) S.scores.d1[pid] = netParFor(S, 'd1', pid);
+    const h = indexHistory(S, 'p1')[0];
+    expect(h.applied).toBe(false);
+    expect(h.after).toBe(14.0);
+  });
+  it('steps 1st–4th by the table, separated on countback', () => {
+    RULES.indexAdjust = byPlace;
+    const S = defaultState();
+    // p6 wins with two birdies, p5 second with one, p1 level, p7 drops a shot;
+    // everyone else level and tied with p1 on countback.
+    field(S, 'd1', { p6: [-1, -1], p5: [-1], p7: [1] });
+    const t = indexTable(S);
+    expect(t.p6[0].after).toBe(3.8 - 1);
+    expect(t.p5[0].after).toBe(9.1 - 0.5);
+    // p1, p2, p3, p4, p8 all level on 36 and every countback: they share 3rd–7th,
+    // which is (0.5 + 1 + 0 + 0 + 0) / 5 = 0.3 each
+    expect(t.p1[0].applied).toBe(true);
+    expect(t.p1[0].after).toBe(14.3);
+    expect(t.p8[0].after).toBe(9.4);
+    // p7 last of eight: beyond the table, no step — but still applied
+    expect(t.p7[0].applied).toBe(true);
+    expect(t.p7[0].after).toBe(23.9);
+    // the next round is played off the moved index
+    expect(phFor(S, 'p6', 'd2')).toBe(playingHandicap(S, 2.8, 'd2'));
+  });
+  it('a tie at the top shares the first two steps', () => {
+    RULES.indexAdjust = byPlace;
+    const S = defaultState();
+    field(S, 'd1', { p1: [-1], p2: [-1], p3: [1], p4: [1], p5: [1], p6: [1], p7: [1], p8: [1] });
+    const t = indexTable(S);
+    // Both birdied the 1st (SI 14 at Elsham) — level on every countback
+    expect(t.p1[0].after).toBe(14.0 - 0.75);
+    expect(t.p2[0].after).toBe(19.3 - 0.75);
+  });
+  it('leaves the scramble alone and chains through the week', () => {
+    RULES.indexAdjust = byPlace;
+    const S = defaultState();
+    field(S, 'd1', { p1: [-1] });
+    field(S, 'd2', { p1: [-1] });
+    const t = indexTable(S);
+    expect(t.p1[0].after).toBe(13.0);
+    expect(t.p1[1].before).toBe(13.0);
+    expect(t.p1[1].after).toBe(12.0);
+    expect(t.p1[2].round.format).toBe('scramble');
+    expect(t.p1[2].applied).toBe(false);
+    expect(currentIndex(S, 'p1')).toBe(12.0);
+  });
+});
+
+describe('extras switched off', () => {
+  it('no bonus ball: nothing doubles, not even the 18th by default', () => {
+    RULES.bonusBalls = false;
+    const S = defaultState();
+    S.scores.d1 = { p1: netParFor(S, 'd1', 'p1') };
+    expect(bonusHoleFor(S, 'd1', 'p1')).toBeNull();
+    expect(playerTally(S, 'd1', 'p1').pts).toBe(36);
+    expect(indexHistory(S, 'p1')[0].after).toBe(12.0);   // 36 − 32 = 4 × 0.5
+    for (const pid of PIDS) S.scores.d1[pid] = netParFor(S, 'd1', pid);
+    for (const r of ROUNDS) { S.scores[r.id] = S.scores[r.id] || {}; for (const pid of PIDS) S.scores[r.id][pid] = netPar(r.id, 10); }
+    S.scramble.d3 = { 0: Array(18).fill(4), 1: Array(18).fill(4), 2: Array(18).fill(4), 3: Array(18).fill(4) };
+    expect(standings(S).every((row) => row.bonusKept === 0)).toBe(true);
+  });
+  it('the rules sentence follows the flags', () => {
+    expect(describeRules()).toContain('bonus ball');
+    expect(describeRules()).toContain('±0.5 per point from 32');
+    RULES.bonusBalls = false;
+    RULES.indexAdjust = { mode: 'place', byPlace: [-1, -0.5, 0.5, 1] };
+    RULES.placePoints = [6, 4, 2, 0];
+    const d = describeRules();
+    expect(d).not.toContain('bonus ball');
+    expect(d).toContain('6 · 4 · 2 · 0 for 1st–4th');
+    expect(d).toContain('−1.0 · −0.5 · +0.5 · +1.0 for 1st–4th');
+  });
+});
+
+describe('two rounds in a day', () => {
+  it('labels the day with the slot', () => {
+    const r = ROUNDS[1];
+    expect(dayLabel(r)).toBe('Tue');
+    const am: Round = { ...r, slot: 'am' };
+    expect(dayLabel(am)).toBe('Tue am');
+  });
+});

@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ROUNDS, first, gname } from '../data/trip';
+import { ROUNDS, TRIP, dayLabel, first, gname } from '../data/trip';
 import { groupsFor, roundStatus } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { FormatChips } from '../components/RoundBits';
-
-// First tee of the week: Elsham, Mon 7 Sept 2026, 12:28.
-const TRIP_START = new Date(2026, 8, 7, 12, 28);
 
 function Countdown() {
   const [now, setNow] = useState(() => Date.now());
@@ -14,7 +11,7 @@ function Countdown() {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const secs = Math.floor((TRIP_START.getTime() - now) / 1000);
+  const secs = Math.floor((TRIP.firstTee.getTime() - now) / 1000);
   if (secs < 0) return null;   // trip's underway — the rounds list takes over
   const d = Math.floor(secs / 86400), h = Math.floor((secs % 86400) / 3600),
     m = Math.floor((secs % 3600) / 60), s = secs % 60;
@@ -44,7 +41,7 @@ export function TripPage() {
           <Link className="itin-day" to={`/round/${r.id}`} key={r.id}>
             <div className="itin-date">
               <span className="n">{r.dnum}</span>
-              <span className="m">{r.dow}</span>
+              <span className="m">{dayLabel(r)}</span>
               <span className={`st ${roundStatus(S, r.id)}`} />
             </div>
             <div className="itin-body">

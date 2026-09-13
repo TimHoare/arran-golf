@@ -2,7 +2,7 @@
 // scramble result, the round leaderboard, and the live gross/points scorecard.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { PL, PLAYERS, R, first, pName, gname, type Round } from '../data/trip';
+import { PL, PLAYERS, R, first, pName, gname, ord, type Round } from '../data/trip';
 import { RULES } from '../data/trip';
 import {
   groupsFor, pairPointsFor, pairTotals, playerTally, roundStatus, stablefordResults, teamTally, phFor, scrambleResults, shotsOn, trim,
@@ -281,7 +281,7 @@ export function Leaderboard({ r }: { r: Round }) {
       </div>
       {done && !scramble && (
         <p className="small muted" style={{ marginTop: 8 }}>
-          Week points {RULES.placePoints.join(' · ')} for 1st–8th (ties share, after countback){r.pairs ? <>, plus {RULES.pairPoints.join(' · ')} each for the hidden pairs</> : null}.
+          Week points {RULES.placePoints.join(' · ')} for 1st–{ord(RULES.placePoints.length)} (ties share, after countback){r.pairs ? <>, plus {RULES.pairPoints.join(' · ')} each for the hidden pairs</> : null}.
         </p>
       )}
     </>
@@ -314,7 +314,7 @@ export function GrossLegend() {
       <span className="lg"><span className="gs par">4</span> par</span>
       <span className="lg"><span className="gs bogey">5</span> bogey</span>
       <span className="lg"><span className="gs double">6</span> double+</span>
-      <span className="lg"><span className="bbx sw"><span className="gs par">4</span></span> bonus ball</span>
+      {RULES.bonusBalls && <span className="lg"><span className="bbx sw"><span className="gs par">4</span></span> bonus ball</span>}
       <span className="lg"><b>48+</b> a pickup in there</span>
     </p>
   );

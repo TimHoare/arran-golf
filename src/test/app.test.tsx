@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { StrictMode } from 'react';
 import App from '../App';
 import { reloadFromStorage, setGroupDraw, setMe } from '../lib/store';
+import { ME_KEY, STORE_KEY } from '../lib/state';
 
 function mount(path = '/trip') {
   return render(
@@ -29,7 +30,7 @@ describe('app flow', () => {
     expect(screen.getByText("Who's this?")).toBeTruthy();
     fireEvent.click(screen.getByText('Rob Ellis'));
     expect(screen.queryByText("Who's this?")).toBeNull();
-    expect(localStorage.getItem('yorkshire-golf-2026-me')).toBe('p6');
+    expect(localStorage.getItem(ME_KEY)).toBe('p6');
   });
 
   it('trip page lists all five rounds', () => {
@@ -42,7 +43,7 @@ describe('app flow', () => {
 
   it('player page shows their index and a row per round', () => {
     setMe('p1');
-    localStorage.setItem('yorkshire-golf-2026-g2', JSON.stringify({
+    localStorage.setItem(STORE_KEY, JSON.stringify({
       v: 3, scores: {}, pairs: {}, scramble: {},
       groups: { d3: [['p1', 'p3'], ['p5', 'p7'], ['p2', 'p4'], ['p6', 'p8']] },
     }));
@@ -60,7 +61,7 @@ describe('app flow', () => {
   it("player round page: the player's own card with bonus ball and side bets on the holes", () => {
     setMe('p1');
     const eighteen = (g: number) => Array(18).fill(g);
-    localStorage.setItem('yorkshire-golf-2026-g2', JSON.stringify({
+    localStorage.setItem(STORE_KEY, JSON.stringify({
       v: 3, pairs: {}, scramble: {},
       scores: { d1: { p6: [4, 3, 0, ...eighteen(4).slice(3)] } },
       groups: { d1: [['p1', 'p2', 'p3', 'p4'], ['p5', 'p6', 'p7', 'p8']] },
@@ -97,7 +98,7 @@ describe('app flow', () => {
     setMe('p1');
     const par = [4,4,4,5,5,3,4,4,3, 5,4,3,4,3,4,4,4,4];
     const scores = Object.fromEntries(['p1','p2','p3','p4','p5','p6','p7','p8'].map((pid, i) => [pid, par.map((p) => p + (i % 3))]));
-    localStorage.setItem('yorkshire-golf-2026-g2', JSON.stringify({
+    localStorage.setItem(STORE_KEY, JSON.stringify({
       v: 3, scramble: {}, scores: { d1: scores },
       groups: { d1: [['p1', 'p2', 'p3', 'p4'], ['p5', 'p6', 'p7', 'p8']] },
       pairs: { d1: { pairs: [['p1', 'p2'], ['p3', 'p4'], ['p5', 'p6'], ['p7', 'p8']], revealed: true } },
@@ -139,7 +140,7 @@ describe('app flow', () => {
 
   it("round page leaderboard rows link to each player's card", () => {
     setMe('p1');
-    localStorage.setItem('yorkshire-golf-2026-g2', JSON.stringify({
+    localStorage.setItem(STORE_KEY, JSON.stringify({
       v: 3, pairs: {}, scramble: {},
       scores: { d1: { p6: [4, 3, 4], p1: [5, 5, 5] } },
       groups: { d1: [['p1', 'p2', 'p3', 'p4'], ['p5', 'p6', 'p7', 'p8']] },
@@ -154,7 +155,7 @@ describe('app flow', () => {
 
   it("player round page on scramble day shows the team's card", () => {
     setMe('p1');
-    localStorage.setItem('yorkshire-golf-2026-g2', JSON.stringify({
+    localStorage.setItem(STORE_KEY, JSON.stringify({
       v: 3, pairs: {}, scores: {},
       scramble: { d3: { 3: [4, 4] } },
       groups: { d3: [['p1', 'p3'], ['p5', 'p7'], ['p2', 'p4'], ['p6', 'p8']] },
@@ -201,17 +202,17 @@ describe('app flow', () => {
     const robRow2 = [...slide2.querySelectorAll('.score-row')].find((r) => within(r as HTMLElement).queryByText('Rob'))! as HTMLElement;
     fireEvent.click(within(robRow2).getByLabelText(/One stroke fewer/));
     expect((within(robRow2).getByPlaceholderText('4') as HTMLInputElement).value).toBe('3'); // birdie
-    let saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
+    let saved = JSON.parse(localStorage.getItem(STORE_KEY)!);
     expect(saved.scores.d1.p6[0]).toBe(4);
     expect(saved.scores.d1.p6[1]).toBe(3);
     expect(within(robRow2).getByText('Birdie')).toBeTruthy();
     // typing 0 marks a pickup (hold − does the same); − then clears it
     fireEvent.change(within(robRow2).getByPlaceholderText('4'), { target: { value: '0' } });
     expect(within(robRow2).getByText('Pickup')).toBeTruthy();
-    saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
+    saved = JSON.parse(localStorage.getItem(STORE_KEY)!);
     expect(saved.scores.d1.p6[1]).toBe(0);
     fireEvent.click(within(robRow2).getByLabelText('Undo the X'));
-    saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
+    saved = JSON.parse(localStorage.getItem(STORE_KEY)!);
     expect(saved.scores.d1.p6[1]).toBeNull();
   });
 
@@ -223,19 +224,19 @@ describe('app flow', () => {
     fireEvent.click(within(slide1).getByText('Three-putts'));
     const plus = within(slide1).getByLabelText('One three-putt more for Rob') as HTMLButtonElement;
     fireEvent.click(plus);
-    let saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
+    let saved = JSON.parse(localStorage.getItem(STORE_KEY)!);
     expect(saved.bits.d1[1].threeputt[0].counts.p6).toBe(1);
     // capped: the + is disabled and a second tap changes nothing
     const capped = within(slide1).getByLabelText('Rob already has the three-putt') as HTMLButtonElement;
     expect(capped.disabled).toBe(true);
     fireEvent.click(capped);
-    saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
+    saved = JSON.parse(localStorage.getItem(STORE_KEY)!);
     expect(saved.bits.d1[1].threeputt[0].counts.p6).toBe(1);
     // cuckoos have no cap
     fireEvent.click(within(slide1).getByText('Cuckoos'));
     fireEvent.click(within(slide1).getByLabelText('One cuckoo more for Rob'));
     fireEvent.click(within(slide1).getByLabelText('One cuckoo more for Rob'));
-    saved = JSON.parse(localStorage.getItem('yorkshire-golf-2026-g2')!);
+    saved = JSON.parse(localStorage.getItem(STORE_KEY)!);
     expect(saved.bits.d1[1].cuckoo[0].counts.p6).toBe(2);
   });
 
@@ -257,7 +258,7 @@ describe('app flow', () => {
   it('scoring deep link with no hole lands on first unfinished hole for my group', () => {
     setMe('p1');
     // ragged 3-entry arrays on purpose: migrate() must pad them to 18
-    localStorage.setItem('yorkshire-golf-2026-g2', JSON.stringify({
+    localStorage.setItem(STORE_KEY, JSON.stringify({
       v: 3,
       scores: { d1: { p1: [4, 4, 4], p2: [4, 4, 4], p3: [4, 4, 4], p4: [4, 4, 4] } },
       pairs: {}, scramble: {},

@@ -5,7 +5,7 @@
 // With no Supabase keys configured everything runs single-phone.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { CONFIG } from '../config';
-import { BITS, PLAYERS, R } from '../data/trip';
+import { BITS, PLAYERS, R, TRIP } from '../data/trip';
 import {
   defaultState, loadState, persistState, migrate, cleanBonusBall, cleanHoleBits, cleanStakes,
   BIT_KINDS, ME_KEY, OUTBOX_KEY,
@@ -349,7 +349,7 @@ export function initSync(create: typeof createClient = createClient) {
     .then(() => { setSyncStatus('live'); void flushOutbox(); })
     .catch(() => { setSyncStatus('offline'); setTimeout(hydrate, 5000); });
   hydrate();
-  sb.channel('yg-live')
+  sb.channel(TRIP.slug + '-live')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'hole_scores' }, (p) => onRowChange('hole_scores', p.eventType, (p.new as Row)?.round_id ? p.new as Row : p.old as Row))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'team_scores' }, (p) => onRowChange('team_scores', p.eventType, (p.new as Row)?.round_id ? p.new as Row : p.old as Row))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'pair_draws' }, (p) => onRowChange('pair_draws', p.eventType, (p.new as Row)?.round_id ? p.new as Row : p.old as Row))

@@ -4,6 +4,17 @@
 // Beverley's are TBC. All groups are placeholders — check the tee sheet.
 import type { BitKind } from '../lib/state';
 
+// The trip itself: names the app, keys this phone's storage and the shared
+// realtime channel (so two trips on one phone never mix), and starts the
+// countdown. slug is also the bit that tells one trip's database from another's.
+export const TRIP = {
+  slug: 'yorkshire-golf-2026',
+  name: 'Yorkshire',
+  year: '2026',
+  dates: 'Mon 7 – Fri 11 September',
+  firstTee: new Date(2026, 8, 7, 12, 28),   // Elsham, 12:28
+};
+
 export interface Hole { n: number; par: number; si: number; yds: number | null }
 export interface Group { tee: string; name?: string; players: string[] }
 // An alternative tee set for a course: rating/slope drive the handicaps, per-hole
@@ -12,6 +23,7 @@ export interface Group { tee: string; name?: string; players: string[] }
 export interface TeeSet { key: string; label: string; cr: number; slope: number; yds: (number | null)[] | null }
 export interface Round {
   id: string; n: number; dow: string; dnum: number; mon: string;
+  slot?: 'am' | 'pm';   // two rounds on one day: which this is (labels only)
   club: string; short: string; town: string; address: string;
   format: 'stableford' | 'scramble'; pairs: boolean;
   par: number; cr: number; slope: number; tees: string;
@@ -72,13 +84,25 @@ export const PLAYERS: Player[] = [
   { id: 'p8', name: 'Liam Cameron',      start: 9.1 },
 ];
 
+// How a player's index moves after each completed stableford round:
+//   points — ±perPoint for every stableford point away from par (a 36 off a
+//            par of 32 with perPoint 0.5 cuts the index by 2.0);
+//   place  — a fixed step by finishing position in the round, byPlace[0] for
+//            the winner; ties after countback share the steps between them, and
+//            nothing moves until every player's card for the round is in.
+export type IndexAdjust =
+  | { mode: 'points'; par: number; perPoint: number }
+  | { mode: 'place'; byPlace: number[] };
+
 export const RULES = {
   placePoints: [10, 8, 6, 4, 3, 2, 1, 0],  // individual stableford, 1st–8th
   pairPoints: [6, 4, 2, 0],                // hidden pairs, per player, 1st–4th
   scramblePoints: [6, 4, 2, 0],            // scramble teams, per player, 1st–4th
+  bonusBalls: true,                        // one 2× ball per player for the trip
   bonusKeep: 1,                            // still holding your bonus ball at the end of the trip
+  sideBets: true,                          // cuckoos, camels, fish… logged hole by hole
   allowance: 100,
-  par: 32,                     // stableford points pivot for index adjustment
+  indexAdjust: { mode: 'points', par: 32, perPoint: 0.5 } as IndexAdjust,
   scrambleAllowance: [35, 15], // % of course handicaps, lowest first (2-man teams)
 };
 
@@ -114,3 +138,6 @@ export const initials = (p: Player) => {
 };
 export const colour = (i: number) => AVATAR_COLOURS[((i % AVATAR_COLOURS.length) + AVATAR_COLOURS.length) % AVATAR_COLOURS.length];
 export const gname = (grp: Group, t: number) => grp.name || `Group ${t + 1}`;
+// The day a round is on, as a short label: 'Tue', or 'Tue am' when the day has two.
+export const dayLabel = (r: Round) => r.dow + (r.slot ? ` ${r.slot}` : '');
+export const ord = (n: number) => n + (['st', 'nd', 'rd'][n - 1] || 'th');

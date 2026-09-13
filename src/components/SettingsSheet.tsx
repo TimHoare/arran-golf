@@ -1,7 +1,7 @@
-import { BITS, ORGANISER, ROUNDS, pName } from '../data/trip';
+import { BITS, ORGANISER, ROUNDS, RULES, pName } from '../data/trip';
 import { hasSync, setMe, setStakes, setTeeChoice, resetAll } from '../lib/store';
 import { useStore } from '../lib/useStore';
-import { RULES } from '../data/trip';
+import { describeRules } from '../lib/scoring';
 import { BIT_KINDS } from '../lib/state';
 import { toast } from '../lib/toast';
 
@@ -37,7 +37,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         <div className="btn-row">
           <button className="btn primary" onClick={share}>Copy app link</button>
         </div>
-        <div className="course-edit">
+        {RULES.sideBets && <div className="course-edit">
           <h3>Side bets</h3>
           <p className="help">Pence per offence — Cuckoo (tree), Camel (bunker), Fish (water), Three-putt. Whoever has the last one of each at the end of the round pays the total into the group bet.</p>
           <div className="stakes">
@@ -59,7 +59,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
               </label>
             ))}
           </div>
-        </div>
+        </div>}
         <div className="course-edit">
           <h3>Tees</h3>
           <p className="help">Which tees each course is played off. Changing this moves everyone's course handicaps for that round, on every phone.</p>
@@ -80,7 +80,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         </div>
         <div className="course-edit">
           <h3>Rules in play</h3>
-          <p className="help">Week points {RULES.placePoints.join(' · ')} for 1st–8th, ties on the back 9/6/3 · pairs &amp; scramble add {RULES.pairPoints.join(' · ')} each (ties share) · bonus ball 2× one hole every round (the 18th if not called), +{RULES.bonusKeep} if kept all trip · index ±0.5 per point from {RULES.par} · {RULES.allowance}% allowance. Change these in the code.</p>
+          <p className="help">{describeRules()} Change these in the code.</p>
         </div>
         <div className="course-edit">
           <div className="btn-row">

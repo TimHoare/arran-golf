@@ -4,7 +4,7 @@
 // card, with the player's own bits from the flight log.
 import type { ReactNode } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { BITS, PL, R, RULES, first, gname } from '../data/trip';
+import { BITS, PL, R, RULES, first, gname, ord } from '../data/trip';
 import { BIT_KINDS } from '../lib/state';
 import {
   bitsOf, bonusGoneBy, bonusHoleFor, courseHandicap, flightName, flightsFor, fmt1, fmtMoney, groupBitTally, groupsFor,
@@ -15,8 +15,6 @@ import { useStore } from '../lib/useStore';
 import { Avatar, TeamAvatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
 import { FormatChips, Gross, GrossLegend } from '../components/RoundBits';
-
-const ord = (n: number) => n + (['st', 'nd', 'rd'][n - 1] || 'th');
 
 export function PlayerRoundPage() {
   const { pid, rid } = useParams();
@@ -44,21 +42,22 @@ export function PlayerRoundPage() {
   const tally: Tally = scramble ? teamTally(S, r.id, Math.max(0, t)) : playerTally(S, r.id, pid);
 
   // Bonus ball, individual rounds only: the hole it doubled, or where it went.
+  const showBonus = RULES.bonusBalls && !scramble;
   const bb = S.bonus[pid];
-  const bonusHole = scramble ? null : bonusHoleFor(S, r.id, pid);
-  const lostHere = bb?.lost === r.id ? bb.used[r.id] ?? null : null;
-  const goneBefore = !scramble && bonusGoneBy(S, r.id, pid);
-  const bonusText = scramble ? null
+  const bonusHole = showBonus ? bonusHoleFor(S, r.id, pid) : null;
+  const lostHere = showBonus && bb?.lost === r.id ? bb.used[r.id] ?? null : null;
+  const goneBefore = showBonus && bonusGoneBy(S, r.id, pid);
+  const bonusText = !showBonus ? null
     : goneBefore ? `Lost at ${R(bb!.lost!)?.short ?? '?'} · no 2× here`
     : lostHere !== null ? `Lost on the ${ord(lostHere + 1)} · 2× void`
     : bonusHole !== null ? bb?.used[r.id] === undefined ? 'Not called, so 2× on the 18th' : `2× on the ${ord(bonusHole + 1)}`
     : status === 'done' ? 'Not played' : 'Still to play';
 
   // Bits on each hole for one member, and round totals per kind for all of them.
-  const bitsOn = (i: number, who: string) => BIT_KINDS
+  const bitsOn = (i: number, who: string) => (RULES.sideBets ? BIT_KINDS : [])
     .map((k) => ({ k, n: bitGroup < 0 ? 0 : bitsOf(S, r.id, bitGroup, k)[i]?.counts[who] || 0 }))
     .filter((x) => x.n > 0);
-  const bitTotals = BIT_KINDS.map((k) => {
+  const bitTotals = (RULES.sideBets ? BIT_KINDS : []).map((k) => {
     const by = members.map((who) => ({ who, n: Array.from({ length: 18 }, (_, i) => bitsOn(i, who).find((x) => x.k === k)?.n || 0).reduce((a, b) => a + b, 0) }));
     const grpT = bitGroup < 0 ? null : groupBitTally(S, r.id, bitGroup, k);
     const last = grpT && grpT.total > 0 && grpT.last && members.includes(grpT.last) ? grpT.last : null;
@@ -70,6 +69,8 @@ export function PlayerRoundPage() {
   const scr = scramble ? scrambleResults(S, r.id) : null;
   const mine = scr?.rows[pid];
   const pair = r.pairs ? pairTotals(S, r.id).find((row) => row.pair.includes(pid)) : undefined;
+  // The Extras column and section only exist for trips that play something extra.
+  const extrasOn = RULES.sideBets || showBonus;
 
   const extras = (i: number) => {
     const out: ReactNode[] = [];
@@ -91,7 +92,7 @@ export function PlayerRoundPage() {
         <td />
         <td>{pl.length ? <>{pl.reduce((a, x) => a + (x.gross ?? 0), 0)}{plus}</> : '·'}</td>
         <td>{pl.length ? pl.reduce((a, x) => a + (x.pts ?? 0), 0) : '·'}</td>
-        <td />
+        {extrasOn && <td />}
       </tr>
     );
   };
@@ -162,7 +163,7 @@ export function PlayerRoundPage() {
       <div className="sc-wrap">
         <table className="sc player-sc">
           <thead>
-            <tr><th>Hole</th><th>Par</th><th>SI</th><th>{scramble ? 'Team' : 'Gross'}</th><th>Pts</th><th className="x">Extras</th></tr>
+            <tr><th>Hole</th><th>Par</th><th>SI</th><th>{scramble ? 'Team' : 'Gross'}</th><th>Pts</th>{extrasOn && <th className="x">Extras</th>}</tr>
           </thead>
           <tbody>
             {r.holes.flatMap((h, i) => {
@@ -178,7 +179,7 @@ export function PlayerRoundPage() {
                         <td className={row.bonus ? 'bb' : ''}><Gross gross={row.gross} par={h.par} bonus={row.bonus} /></td>
                         <td className={row.pts === 0 ? 'z' : (row.pts ?? 0) >= 3 ? 'g' : ''}>{row.pts}</td>
                       </>}
-                  <td className="x">{extras(i)}</td>
+                  {extrasOn && <td className="x">{extras(i)}</td>}
                 </tr>
               );
               return i === 8 ? [tr, sumRow('Out', 0, 9)] : [tr];
@@ -196,9 +197,10 @@ export function PlayerRoundPage() {
         </p>
       )}
 
-      <div className="section-title"><h2>Extras</h2><span className="eyebrow">{[bitTitle, !scramble && 'bonus ball', 'side bets'].filter(Boolean).join(' · ')}</span></div>
+      {extrasOn && <>
+      <div className="section-title"><h2>Extras</h2><span className="eyebrow">{[bitTitle, showBonus && 'bonus ball', RULES.sideBets && 'side bets'].filter(Boolean).join(' · ')}</span></div>
       <div className="card xlist">
-        {!scramble && (
+        {showBonus && (
           <div className="xrow">
             <span className="bit-ic" aria-hidden>🎱</span>
             <span className="bit-l"><b>Bonus ball</b><small>2× one hole a round · +{RULES.bonusKeep} if kept all week</small></span>
@@ -214,6 +216,7 @@ export function PlayerRoundPage() {
           </div>
         ))}
       </div>
+      </>}
 
       <div className="btn-row" style={{ margin: '14px 0 4px' }}>
         <Link className="btn ghost grow" to={`/round/${r.id}`}>Course, groups &amp; leaderboard</Link>

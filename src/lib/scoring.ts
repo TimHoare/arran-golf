@@ -1,7 +1,7 @@
 // The scoring engine: handicap maths, stableford tallies, results and
 // standings. Pure functions over the trip data and a TripState — no globals,
 // no DOM, fully unit-testable.
-import { ROUNDS, PLAYERS, RULES, R, PL, gname, type Group, type Round, type TeeSet } from '../data/trip';
+import { ROUNDS, PLAYERS, RULES, R, gname, ord, type Group, type Round, type TeeSet } from '../data/trip';
 import { BIT_KINDS, type BitKind, type HoleBits, type TripState, type HoleScores } from './state';
 
 // The groups actually playing a round: the placeholder draw from trip.ts,
@@ -73,6 +73,7 @@ const roundIdx = (rid: string) => ROUNDS.findIndex((r) => r.id === rid);
 // scored, it's deemed played on the 18th. Null once it's lost — in an earlier
 // round, or this one: losing the ball on its hole voids the 2×, either/or.
 export function bonusHoleFor(S: TripState, rid: string, pid: string): number | null {
+  if (!RULES.bonusBalls) return null;
   const bb = S.bonus[pid];
   if (bb?.lost && roundIdx(bb.lost) <= roundIdx(rid)) return null;
   const h = bb?.used[rid];
@@ -85,24 +86,57 @@ export const bonusGoneBy = (S: TripState, rid: string, pid: string): boolean => 
   return !!lost && roundIdx(lost) < roundIdx(rid);
 };
 
-// Index entering each round: −0.5 per point over 32 for every completed stableford round before it.
-// Uses competition points, so a bonus ball's doubled hole moves the handicap too.
-export function indexHistory(S: TripState, pid: string) {
-  const p = PL(pid);
-  const out: { round: Round; before: number; after: number; applied: boolean }[] = [];
-  let idx = p.start;
+// ---------- Index drift ----------
+// Everyone's index entering and leaving every round, walked round by round
+// from the starting indexes. It has to be the whole field at once: under
+// place-based adjustment a player's move depends on where the others finished,
+// and what everyone plays off depends on the round before. The round's
+// handicaps come from the index carried in, never the one carried out.
+//   points mode: each player moves as soon as their own card is complete;
+//   place mode:  nobody moves until every card is in, then the steps in
+//                byPlace go to 1st, 2nd… (ties after countback share theirs).
+// Scramble rounds never move an index.
+export interface IndexStep { round: Round; before: number; after: number; applied: boolean }
+type IndexTable = Record<string, IndexStep[]>;
+
+// Memoised on the inputs that can move an index — the store mutates state in
+// place, so the object itself is no guide to whether anything changed.
+let cache: { key: string; table: IndexTable } | null = null;
+const r2 = (n: number) => Math.round(n * 100) / 100;   // shared steps can be quarters; kill float noise
+
+export function indexTable(S: TripState): IndexTable {
+  const key = JSON.stringify([S.scores, S.teeChoice, S.bonus, RULES.indexAdjust, RULES.bonusBalls]);
+  if (cache?.key === key) return cache.table;
+  const idx: Record<string, number> = Object.fromEntries(PLAYERS.map((p) => [p.id, p.start]));
+  const table: IndexTable = Object.fromEntries(PLAYERS.map((p) => [p.id, []]));
+  const adj = RULES.indexAdjust;
   for (const r of ROUNDS) {
-    const before = idx;
-    let after = idx, applied = false;
+    const after = { ...idx };
+    const moved = new Set<string>();   // applied this round, even if the step came to 0
     if (r.format === 'stableford') {
-      const t = tally(r.id, holesOf(S, r.id, pid), playingHandicap(S, idx, r.id), bonusHoleFor(S, r.id, pid));
-      if (t.complete) { after = idx - 0.5 * (t.pts - RULES.par); applied = true; }
+      const ts = PLAYERS.map((p) => ({
+        pid: p.id, ...tally(r.id, holesOf(S, r.id, p.id), playingHandicap(S, idx[p.id], r.id), bonusHoleFor(S, r.id, p.id)),
+      }));
+      if (adj.mode === 'points') {
+        for (const t of ts) if (t.complete) { after[t.pid] = r2(idx[t.pid] - adj.perPoint * (t.pts - adj.par)); moved.add(t.pid); }
+      } else if (ts.every((t) => t.complete)) {
+        const rows: (typeof ts[number] & { place?: number; points?: number })[] = ts;
+        const order = (t: Tally) => [t.pts, ...countback(t)];
+        rows.sort((a, b) => {
+          const ka = order(a), kb = order(b);
+          return kb[0] - ka[0] || kb[1] - ka[1] || kb[2] - ka[2] || kb[3] - ka[3];
+        });
+        award(rows, adj.byPlace, (a, b) => order(a).join() === order(b).join());
+        for (const t of rows) { after[t.pid] = r2(idx[t.pid] + (t.points ?? 0)); moved.add(t.pid); }
+      }
     }
-    out.push({ round: r, before, after, applied });
-    idx = after;
+    for (const p of PLAYERS) table[p.id].push({ round: r, before: idx[p.id], after: after[p.id], applied: moved.has(p.id) });
+    Object.assign(idx, after);
   }
-  return out;
+  cache = { key, table };
+  return table;
 }
+export const indexHistory = (S: TripState, pid: string): IndexStep[] => indexTable(S)[pid];
 export const currentIndex = (S: TripState, pid: string) => {
   const h = indexHistory(S, pid);
   return h[h.length - 1].after;
@@ -194,7 +228,7 @@ export function standings(S: TripState): StandingsRow[] {
       if (rp !== null) { pts += rp; played++; }
       if (r.format === 'stableford') stab += playerTally(S, r.id, p.id).pts;
     }
-    const bonusKept = tripDone && !S.bonus[p.id]?.lost ? RULES.bonusKeep : 0;
+    const bonusKept = RULES.bonusBalls && tripDone && !S.bonus[p.id]?.lost ? RULES.bonusKeep : 0;
     return { pid: p.id, i, pts: pts + bonusKept, stab, played, rank: 0, bonusKept };
   });
   rows.sort((a, b) => b.pts - a.pts || b.stab - a.stab || a.i - b.i);
@@ -305,6 +339,21 @@ export function relPar(diff: number): [string, ParBand] {
   if (diff === 0) return ['Par', 'level'];
   if (diff === 1) return ['Bogey', 'over'];
   return ['+' + diff, 'double'];
+}
+
+// The rules in play, in a sentence — for the settings sheet.
+export function describeRules(): string {
+  const pp = RULES.placePoints;
+  const out = [`Week points ${pp.join(' · ')} for 1st–${ord(pp.length)}, ties on the back 9/6/3`];
+  if (ROUNDS.some((r) => r.pairs)) out.push(`hidden pairs add ${RULES.pairPoints.join(' · ')} each (ties share)`);
+  if (ROUNDS.some((r) => r.format === 'scramble')) out.push(`scramble adds ${RULES.scramblePoints.join(' · ')} each (ties share)`);
+  if (RULES.bonusBalls) out.push(`bonus ball 2× one hole every round (the 18th if not called), +${RULES.bonusKeep} if kept all trip`);
+  const a = RULES.indexAdjust;
+  out.push(a.mode === 'points'
+    ? `index ±${trim(a.perPoint)} per point from ${a.par}`
+    : `index ${a.byPlace.map(signed).join(' · ')} for 1st–${ord(a.byPlace.length)} each round (ties share)`);
+  out.push(`${RULES.allowance}% allowance`);
+  return out.join(' · ') + '.';
 }
 
 export const fmt1 = (n: number) => (Math.round(n * 10) / 10).toFixed(1);
