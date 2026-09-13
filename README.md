@@ -54,9 +54,22 @@ Check out an older commit of `backups` first to go back further. The scripts use
 
 Push to `main`. The `Deploy to GitHub Pages` action runs tests, builds, and publishes `dist/`. First-time repo setup: Settings → Pages → Source: **GitHub Actions**. The site lives at `/<repo name>/`; the build reads that from the repo, so nothing to edit.
 
+## The courses
+
+| | Day | Course | Holes | Par | Tees in the app |
+|---|---|---|---|---|---|
+| 1 | Wed 23 | Lochranza | 11 par-3s played as 18 | 54 | one set |
+| 2 | Thu 24 am | Brodick | 18 | 64 | yellow (whites change a par, so not offered) |
+| 3 | Thu 24 pm | Lamlash | 18 | 64 | white · yellow |
+| 4 | Fri 25 am | Corrie | 9 × 2 | 62 | yellow · white |
+| 5 | Fri 25 pm | Whiting Bay | 18 | 63 | yellow · white |
+| 6 | Sat 26 am | Machrie Bay | 9 × 2 | 66 | white · yellow |
+| 7 | Sat 26 pm | Shiskine | 12 | 42 | yellow · white |
+
+Rounds have their own hole count: Shiskine's twelve holes get twelve slides, a 6/4/2 countback and a course handicap scaled by 12/18 (which reproduces the club's own conversion chart). The nine-holers use the club cards' two stroke indexes per hole — odd first time round, even the second. Every card's sources and caveats are in the comments in `src/data/trip.ts`; the ones worth checking in the clubhouse are Lochranza's stroke indexes (only an aggregator's card exists for the new 18-tee layout) and Brodick's and Lamlash's ratings (third-party figures, the clubs don't publish theirs).
+
 ## Still to fill in
 
 1. **Supabase.** Create the trip's own project, run `supabase-schema.sql` in its SQL editor, put the project URL and publishable key in `src/config.ts`. Until then the app runs in single-phone mode.
-2. **`src/data/trip.ts`.** `TRIP` (name, year, dates, first tee for the countdown — and change `slug` if the repo is renamed), the seven rounds (club, town, address, tee time, and the real card: par, SI and yards per hole, CR and slope), the four players and their starting indexes.
-3. **Photos** (optional): `src/assets/avatars/<player id>.webp`. Anyone without one gets their initials.
-4. **Name the app** in `index.html` (`<title>`), `public/manifest.json` (`name`, `short_name`) and this README, if "Golf Trip" isn't it. Renaming the repo moves the site to the new `/<name>/` path on its own.
+2. **Tee times** — each round's `groups[0].tee` in `src/data/trip.ts`, and `TRIP.firstTee` for the countdown.
+3. **Photos** for Jonny and George (optional): `src/assets/avatars/p2.webp` and `p4.webp`. Liam and Adam's carry over from Yorkshire.

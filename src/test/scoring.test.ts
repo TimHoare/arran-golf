@@ -27,11 +27,25 @@ describe('trip shape', () => {
     expect(RULES.bonusBalls).toBe(false);
     expect(RULES.sideBets).toBe(false);
   });
-  it('every card adds up: 18 holes, stroke indexes 1–18 once each', () => {
+  it('every card adds up: 18 holes (12 at Shiskine), stroke indexes 1–n once each, alt tees the same length', () => {
     for (const r of ROUNDS) {
-      expect(r.holes).toHaveLength(18);
-      expect([...r.holes].map((h) => h.si).sort((a, b) => a - b)).toEqual(Array.from({ length: 18 }, (_, i) => i + 1));
+      const n = r.holes.length;
+      expect(n).toBe(r.short === 'Shiskine' ? 12 : 18);
+      expect([...r.holes].map((h) => h.si).sort((a, b) => a - b)).toEqual(Array.from({ length: n }, (_, i) => i + 1));
       expect(r.holes.reduce((a, h) => a + h.par, 0)).toBe(r.par);
+      expect(r.holes.map((h) => h.n)).toEqual(Array.from({ length: n }, (_, i) => i + 1));
+      for (const t of r.altTees ?? []) expect(t.yds).toHaveLength(n);
+    }
+  });
+  it('the nine-holers repeat their nine: same pars and yards, odd then even stroke indexes', () => {
+    for (const short of ['Corrie', 'Machrie Bay']) {
+      const r = ROUNDS.find((x) => x.short === short)!;
+      for (let i = 0; i < 9; i++) {
+        expect(r.holes[i + 9].par).toBe(r.holes[i].par);
+        expect(r.holes[i + 9].yds).toBe(r.holes[i].yds);
+        expect(r.holes[i + 9].si).toBe(r.holes[i].si + 1);
+        expect(r.holes[i].si % 2).toBe(1);
+      }
     }
   });
   it('one group of four needs no draw, so scoring is open from the start', () => {
@@ -42,10 +56,12 @@ describe('trip shape', () => {
 });
 
 describe('handicap maths', () => {
-  it('course handicap = index × slope/113 + (CR − par), rounded', () => {
+  it('course handicap = index × slope/113 + (CR − par), rounded — the index scaled to the holes played', () => {
     const S = defaultState();
     for (const r of ROUNDS)
-      expect(courseHandicap(S, 14.0, r.id)).toBe(Math.round(14.0 * (r.slope / 113) + (r.cr - r.par)));
+      expect(courseHandicap(S, 14.0, r.id)).toBe(Math.round(14.0 * (r.holes.length / 18) * (r.slope / 113) + (r.cr - r.par)));
+    // Shiskine's twelve: matches the club's own conversion chart for our four
+    expect(PIDS.map((pid) => courseHandicap(S, PLAYERS.find((p) => p.id === pid)!.start, 'r7'))).toEqual([5, 3, 9, 8]);
   });
   it('shots per hole follow stroke index', () => {
     expect(shotsOn(18, 1)).toBe(1);
@@ -121,7 +137,7 @@ describe('results', () => {
   });
   it('standings rank by week points, then stableford total', () => {
     const S = defaultState();
-    S.scores[r1.id] = Object.fromEntries(PIDS.map((pid, i) => [pid, filled(4 + i)]));
+    S.scores[r1.id] = Object.fromEntries(PIDS.map((pid, i) => [pid, filled(3 + i)]));   // Lochranza is all par 3s
     const st = standings(S);
     expect(st).toHaveLength(4);
     expect(st[0].rank).toBe(1);

@@ -46,8 +46,9 @@ describe('app flow', () => {
     setMe('p1');
     mount();
     for (const r of ROUNDS) expect(screen.getByText(r.club)).toBeTruthy();
-    expect(screen.getAllByText('Fri am')).toHaveLength(1);
-    expect(screen.getAllByText('Fri pm')).toHaveLength(1);
+    expect(screen.getAllByText('Thu am')).toHaveLength(1);
+    expect(screen.getAllByText('Thu pm')).toHaveLength(1);
+    expect(screen.getByText('Shiskine Golf & Tennis Club')).toBeTruthy();
     expect(screen.queryByText('To be set')).toBeNull();
   });
 
@@ -63,14 +64,14 @@ describe('app flow', () => {
 
   it("player round page: the card without an Extras column or bonus-ball legend", () => {
     setMe('p1');
-    save({ scores: { r1: { p2: [4, 3, 0, ...Array(15).fill(4)] } } });
+    save({ scores: { r1: { p2: [3, 2, 0, ...Array(15).fill(3)] } } });   // Lochranza: all par 3s
     const { container: c } = mount('/player/p2/round/r1');
     expect(screen.getByText(R('r1')!.club)).toBeTruthy();
     const rows = [...c.querySelectorAll('table.player-sc tbody tr:not(.sum)')];
     expect(rows).toHaveLength(18);
     expect(c.querySelectorAll('table.player-sc thead th')).toHaveLength(5);   // Hole Par SI Gross Pts
-    expect(rows[0].querySelector('.gs')!.className).toBe('gs par');
-    expect(rows[1].querySelector('.gs')!.className).toBe('gs birdie');
+    expect(rows[0].querySelector('.gs')!.className).toBe('gs par');      // 3 on a par 3
+    expect(rows[1].querySelector('.gs')!.className).toBe('gs birdie');   // 2
     expect(rows[2].textContent).toContain('✕');
     expect(screen.queryByText('Extras')).toBeNull();
     expect(screen.queryByText('bonus ball')).toBeNull();
@@ -84,7 +85,8 @@ describe('app flow', () => {
     expect(screen.getByText('Scores').closest('a')!.getAttribute('href')).toBe('/round/r2/score');
     expect(screen.queryByText(/Set groups/)).toBeNull();
     expect(screen.queryByText('Side bets')).toBeNull();
-    expect(screen.getByText('Round 2 · Fri 2 TBC · TBC')).toBeTruthy();
+    expect(screen.getByText('Round 2 · Thu 24 Sept · Brodick')).toBeTruthy();
+    expect(screen.getByText('4,468 yds')).toBeTruthy();   // Brodick off the yellows
   });
 
   it('scoring page: one group, 18 slides, + from empty records par, − a birdie, 0 a pickup, no extras', () => {
@@ -98,16 +100,16 @@ describe('app flow', () => {
     expect(slide1.querySelectorAll('.score-row')).toHaveLength(4);
     const row = [...slide1.querySelectorAll('.score-row')].find((r) => within(r as HTMLElement).queryByText('Jonny'))! as HTMLElement;
     fireEvent.click(within(row).getByLabelText('One stroke more'));
-    expect((within(row).getByPlaceholderText('4') as HTMLInputElement).value).toBe('4');
+    expect((within(row).getByPlaceholderText('3') as HTMLInputElement).value).toBe('3');   // Lochranza 1st: par 3
     const slide2 = container.querySelector('.slide[data-slide="2"]')!;
     const row2 = [...slide2.querySelectorAll('.score-row')].find((r) => within(r as HTMLElement).queryByText('Jonny'))! as HTMLElement;
     fireEvent.click(within(row2).getByLabelText(/One stroke fewer/));
-    expect((within(row2).getByPlaceholderText('4') as HTMLInputElement).value).toBe('3');
+    expect((within(row2).getByPlaceholderText('3') as HTMLInputElement).value).toBe('2');
     let saved = JSON.parse(localStorage.getItem(STORE_KEY)!);
-    expect(saved.scores.r1.p2[0]).toBe(4);
-    expect(saved.scores.r1.p2[1]).toBe(3);
+    expect(saved.scores.r1.p2[0]).toBe(3);
+    expect(saved.scores.r1.p2[1]).toBe(2);
     expect(within(row2).getByText('Birdie')).toBeTruthy();
-    fireEvent.change(within(row2).getByPlaceholderText('4'), { target: { value: '0' } });
+    fireEvent.change(within(row2).getByPlaceholderText('3'), { target: { value: '0' } });
     expect(within(row2).getByText('Pickup')).toBeTruthy();
     saved = JSON.parse(localStorage.getItem(STORE_KEY)!);
     expect(saved.scores.r1.p2[1]).toBe(0);
@@ -152,7 +154,7 @@ describe('app flow', () => {
     const { container } = mount('/standings');
     expect(container.querySelector('.lb-row .chip.you')).toBeTruthy();
     expect([...container.querySelectorAll('.rounds-table thead th')].map((th) => th.textContent))
-      .toEqual(['Player', 'Thu', 'Fri am', 'Fri pm', 'Sat am', 'Sat pm', 'Sun am', 'Sun pm', 'Total']);
+      .toEqual(['Player', 'Wed', 'Thu am', 'Thu pm', 'Fri am', 'Fri pm', 'Sat am', 'Sat pm', 'Total']);
     const cells = [...container.querySelectorAll('.rounds-table tbody tr:first-child td a')];
     expect(cells.map((a) => a.getAttribute('href'))).toEqual(['/player/p1', ...ROUNDS.map((r) => `/player/p1/round/${r.id}`)]);
     expect(screen.queryByText(/bonus ball/)).toBeNull();

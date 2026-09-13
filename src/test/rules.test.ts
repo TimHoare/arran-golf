@@ -109,8 +109,9 @@ describe('extras off', () => {
 
 describe('two rounds in a day', () => {
   it('labels the day with the slot', () => {
-    expect(dayLabel(ROUNDS[0])).toBe('Thu');
-    expect(dayLabel(ROUNDS[1])).toBe('Fri am');
-    expect(dayLabel(ROUNDS[2])).toBe('Fri pm');
+    expect(dayLabel(ROUNDS[0])).toBe('Wed');
+    expect(dayLabel(ROUNDS[1])).toBe('Thu am');
+    expect(dayLabel(ROUNDS[2])).toBe('Thu pm');
+    expect(ROUNDS.map((r) => r.short)).toEqual(['Lochranza', 'Brodick', 'Lamlash', 'Corrie', 'Whiting Bay', 'Machrie Bay', 'Shiskine']);
   });
 });

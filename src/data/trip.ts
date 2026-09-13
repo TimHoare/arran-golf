@@ -1,7 +1,5 @@
-// Everything fixed about the trip. PLACEHOLDERS throughout until the trip is
-// settled — search for "TBC" to find them: the name and dates, every course
-// (one made-up par-72 card stands in for all seven), the players' names and
-// starting indexes, and the tee times.
+// Everything fixed about the trip: the Isle of Arran, 23–26 September 2026.
+// Still TBC: tee times, and the first tee for the countdown.
 import type { BitKind } from '../lib/state';
 
 // The trip itself: names the app, keys this phone's storage and the shared
@@ -35,25 +33,98 @@ function card(pars: number[], sis: number[], yds: number[]): Hole[] {
   return pars.map((par, i) => ({ n: i + 1, par, si: sis[i], yds: yds[i] ?? null }));
 }
 
-// TBC: a stand-in par 72 until each club's published card goes in (par / SI /
-// yards per hole, and the CR and slope for the tees being played).
-const PLACEHOLDER = card([4,4,3,5,4,3,4,5,4, 4,3,5,4,4,3,4,5,4], [7,3,15,11,1,17,9,13,5, 8,16,10,2,4,18,6,12,14], []);
+// A nine-hole course played twice: the club card gives each hole two stroke
+// indexes, odd first time round and even the second, so the nine SIs here are
+// the first-loop ones and the second loop takes the next even number.
+function twice(pars: number[], sis: number[], yds: number[]): Hole[] {
+  const loop = (k: number) => pars.map((par, i) => ({ n: k * 9 + i + 1, par, si: sis[i] + k, yds: yds[i] ?? null }));
+  return [...loop(0), ...loop(1)];
+}
+const twiceYds = (yds: number[]) => [...yds, ...yds];
 
-// Seven stableford rounds over four days: one on the first day, then two a day.
-// Everyone plays together, so each round is a single group off one tee.
+// Seven rounds over four days, Wednesday to Saturday: one on the first day,
+// then two a day. Everyone plays together, so each round is a single group off
+// one tee. Tee times TBC. Cards are the clubs' own where published, otherwise
+// the aggregators that agree with each other — each round's comment says
+// which, and what to double-check in the clubhouse.
 const ALL = ['p1', 'p2', 'p3', 'p4'];
-const round = (n: number, dow: string, dnum: number, slot?: 'am' | 'pm'): Round => ({
-  id: `r${n}`, n, dow, dnum, mon: 'TBC', slot,
-  club: `Course ${n} (TBC)`, short: `Course ${n}`, town: 'TBC', address: 'TBC',
-  format: 'stableford', pairs: false, par: 72, cr: 70.0, slope: 125, tees: 'yellow',
-  holes: PLACEHOLDER,
-  groups: [{ tee: 'TBC', players: ALL }],
-});
 export const ROUNDS: Round[] = [
-  round(1, 'Thu', 1),
-  round(2, 'Fri', 2, 'am'), round(3, 'Fri', 2, 'pm'),
-  round(4, 'Sat', 3, 'am'), round(5, 'Sat', 3, 'pm'),
-  round(6, 'Sun', 4, 'am'), round(7, 'Sun', 4, 'pm'),
+  // Lochranza: pay-and-play run by the campsite. No longer the 9-hole par 34
+  // the aggregators still list — it's now 11 par-3 holes extended to 18 (par
+  // 54, 1,642 yds), one tee set for everyone, rated 52.1/87. CHECK THIS CARD
+  // AT THE CAMPSITE: the 18-hole card here is GolfPass's and its stroke
+  // indexes look generated (odd front, even back) rather than the club's.
+  { id: 'r1', n: 1, dow: 'Wed', dnum: 23, mon: 'Sept', format: 'stableford', pairs: false,
+    club: 'Lochranza Golf', short: 'Lochranza', town: 'Lochranza', address: 'Lochranza Campsite, Lochranza, Isle of Arran, KA27 8HL',
+    par: 54, cr: 52.1, slope: 87, tees: 'white',
+    holes: card(Array(18).fill(3), [1,7,5,17,9,3,11,15,13, 2,8,6,18,10,4,12,16,14], [110,67,77,87,98,87,116,91,103, 73,110,67,77,87,98,87,116,91]),
+    groups: [{ tee: 'TBC', players: ALL }] },
+  // Brodick: 18 holes, par 64 off the yellows (the 2nd is a par 4 off the
+  // whites, par 65 — so no white tee option here, the app can't change a
+  // hole's par per tee). Card from the club's own scorecard PDF (Feb 2026).
+  // Yellow CR/slope 63.2/109 is from aggregators (golfshake, golfnow), not the
+  // club — check the card in the clubhouse.
+  { id: 'r2', n: 2, dow: 'Thu', dnum: 24, mon: 'Sept', slot: 'am', format: 'stableford', pairs: false,
+    club: 'Brodick Golf Club', short: 'Brodick', town: 'Brodick', address: 'Cloy Bridge, Brodick, Isle of Arran, KA27 8DL',
+    par: 64, cr: 63.2, slope: 109, tees: 'yellow',
+    holes: card([4,3,3,3,5,4,3,3,4, 4,4,4,3,3,3,4,4,3], [5,15,7,17,1,13,11,3,9, 10,2,16,6,18,8,14,4,12], [387,192,119,125,460,265,156,167,373, 365,356,251,185,162,118,272,295,220]),
+    groups: [{ tee: 'TBC', players: ALL }] },
+  // Lamlash: 18 holes, par 64, steep and famous for long par 3s. Pars and
+  // yards from the club's hole-by-hole page, SIs from three aggregators that
+  // agree. Yellow 61.1/106 and white 63.9/109 are third-party figures (the
+  // club publishes none). The club's own card is headed "White Medal Tees",
+  // so white is the default here; yellows are in settings.
+  { id: 'r3', n: 3, dow: 'Thu', dnum: 24, mon: 'Sept', slot: 'pm', format: 'stableford', pairs: false,
+    club: 'Lamlash Golf Club', short: 'Lamlash', town: 'Lamlash', address: 'Lamlash, Isle of Arran, KA27 8JU',
+    par: 64, cr: 63.9, slope: 109, tees: 'white',
+    holes: card([4,3,4,3,3,4,4,4,4, 4,4,3,3,3,4,3,3,4], [9,5,1,15,3,7,13,17,11, 12,14,2,16,6,8,18,4,10], [346,184,387,174,201,330,283,256,349, 241,263,224,186,210,284,98,201,293]),
+    altTees: [{ key: 'yellow', label: 'yellow', cr: 61.1, slope: 106, yds: [335,171,351,109,168,317,208,210,271, 198,221,219,178,204,239,94,165,287] }],
+    groups: [{ tee: 'TBC', players: ALL }] },
+  // Corrie: 9 holes played twice, par 62. Card and ratings from the club's
+  // course page (18-hole figures: yellow 58.4/90, white 60.6/96). The club
+  // card gives each hole two stroke indexes — the odd ones first time round,
+  // the even ones second. The club doesn't say which tee visitors play; the
+  // yellows are very short (3,220 yds), the whites 3,830 — switch in settings.
+  { id: 'r4', n: 4, dow: 'Fri', dnum: 25, mon: 'Sept', slot: 'am', format: 'stableford', pairs: false,
+    club: 'Corrie Golf Club', short: 'Corrie', town: 'Sannox', address: 'Sannox, Isle of Arran, KA27 8JD',
+    par: 62, cr: 58.4, slope: 90, tees: 'yellow',
+    holes: twice([3,3,4,3,3,4,4,3,4], [17,3,5,13,11,1,9,15,7], [127,134,219,130,97,238,302,138,225]),
+    altTees: [{ key: 'white', label: 'white', cr: 60.6, slope: 96, yds: twiceYds([135,199,248,171,124,309,307,156,266]) }],
+    groups: [{ tee: 'TBC', players: ALL }] },
+  // Whiting Bay: 18 holes, par 63, nine par 3s. Yellow 61.4/97 from the club's
+  // Scottish Golf slope panel (Nov 2020); white 62.5/99. SI for holes 2 and 5
+  // are 7 and 5 per the printed card and two other sources — the club's web
+  // page misprints them as 9 and 13.
+  { id: 'r5', n: 5, dow: 'Fri', dnum: 25, mon: 'Sept', slot: 'pm', format: 'stableford', pairs: false,
+    club: 'Whiting Bay Golf Club', short: 'Whiting Bay', town: 'Whiting Bay', address: 'Golf Course Road, Whiting Bay, Isle of Arran, KA27 8QT',
+    par: 63, cr: 61.4, slope: 97, tees: 'yellow',
+    holes: card([4,3,3,3,3,4,3,4,4, 4,3,4,3,4,4,3,3,4], [17,7,3,13,5,15,11,1,9, 10,2,12,4,18,14,8,16,6], [218,186,150,83,207,252,229,346,212, 259,166,315,221,229,307,202,127,383]),
+    altTees: [{ key: 'white', label: 'white', cr: 62.5, slope: 99, yds: [225,195,178,112,209,265,231,355,252, 313,201,322,249,254,323,203,131,433] }],
+    groups: [{ tee: 'TBC', players: ALL }] },
+  // Machrie Bay: 9 holes played twice, par 66, split by the shore road. Yards,
+  // pars and SIs from 18Birdies and golf4holland (which agree hole for hole;
+  // odd SIs first time round, even second), names from the club. 18-hole
+  // ratings: white 62.8/104 (the men's standard tee), yellow 61.4/100. The
+  // 1st was rebuilt in 2015 — older cards say 319 yds; the current one 303.
+  { id: 'r6', n: 6, dow: 'Sat', dnum: 26, mon: 'Sept', slot: 'am', format: 'stableford', pairs: false,
+    club: 'Machrie Bay Golf Club', short: 'Machrie Bay', town: 'Machrie', address: 'Machrie, Isle of Arran, KA27 8DY',
+    par: 66, cr: 62.8, slope: 104, tees: 'white',
+    holes: twice([4,3,3,4,3,4,4,4,4], [5,7,11,1,9,17,13,3,15], [303,174,185,343,199,280,280,252,246]),
+    altTees: [{ key: 'yellow', label: 'yellow', cr: 61.4, slope: 100, yds: twiceYds([297,146,185,336,168,254,278,219,244]) }],
+    groups: [{ tee: 'TBC', players: ALL }] },
+  // Shiskine: 12 holes, par 42 — visitors always play 12, off the yellows
+  // (whites are medal only). Card from the club's course page. The club
+  // publishes no 12-hole rating: its WHS figures (yellow 62.0/97, white
+  // 63.3/99) are for an 18-hole layout visitors never see, and it hands out a
+  // conversion chart instead. Rating = par with slope 97 reproduces that
+  // chart's 12-hole course handicap for every one of our four indexes
+  // (5.6 → 3, 8.8 → 5, 14.7 → 8, 16.2 → 9), so that's what's used here.
+  { id: 'r7', n: 7, dow: 'Sat', dnum: 26, mon: 'Sept', slot: 'pm', format: 'stableford', pairs: false,
+    club: 'Shiskine Golf & Tennis Club', short: 'Shiskine', town: 'Blackwaterfoot', address: 'Shore Road, Blackwaterfoot, Isle of Arran, KA27 8HA',
+    par: 42, cr: 42.0, slope: 97, tees: 'yellow',
+    holes: card([4,4,3,3,3,4, 3,4,5,3,3,3], [5,1,9,11,7,3, 10,6,2,12,4,8], [368,357,122,137,212,266, 162,220,477,150,196,120]),
+    altTees: [{ key: 'white', label: 'white', cr: 42.0, slope: 99, yds: [385,380,127,147,244,274, 173,250,509,168,209,126] }],
+    groups: [{ tee: 'TBC', players: ALL }] },
 ];
 
 // Handicap index each player starts the trip on.
