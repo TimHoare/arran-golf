@@ -52,15 +52,15 @@ const ALL = ['p1', 'p2', 'p3', 'p4'];
 export const ROUNDS: Round[] = [
   // Lochranza: pay-and-play run by the campsite. No longer the 9-hole par 34
   // the aggregators still list — it's 11 par-3 holes, one tee set for
-  // everyone, and we play the 11 (par 33). The only published figures are
-  // for the 18-hole extension (52.1/87, par 54): the rating here is that
-  // gap scaled to 11 holes, and the stroke indexes are the 18-hole card's
-  // order re-ranked over these 11. CHECK THE CARD AT THE CAMPSITE — GolfPass
-  // is the only source and its card looks generated rather than the club's.
+  // everyone, and we play the 11 (par 33). Yards per Tim's card. There are
+  // no published stroke indexes, so they're by length, longest first (the
+  // three 87-yarders in hole order). The only published rating is for an
+  // 18-hole extension (52.1/87, par 54); the CR here is that gap scaled to
+  // 11 holes.
   { id: 'r1', n: 1, dow: 'Wed', dnum: 23, mon: 'Sept', format: 'stableford', pairs: false,
     club: 'Lochranza Golf', short: 'Lochranza', town: 'Lochranza', address: 'Lochranza Campsite, Lochranza, Isle of Arran, KA27 8HL',
     par: 33, cr: 31.8, slope: 87, tees: 'white',
-    holes: card(Array(11).fill(3), [1,5,4,11,7,3,8,10,9,2,6], [110,67,77,87,98,87,116,91,103,87,73]),
+    holes: card(Array(11).fill(3), [2,11,9,6,4,7,1,5,3,8,10], [110,67,77,87,98,87,116,91,103,87,73]),
     groups: [{ tee: 'Turn up', players: ALL }] },
   // Brodick: 18 holes, par 64 off the yellows (the 2nd is a par 4 off the
   // whites, par 65 — so no white tee option here, the app can't change a
