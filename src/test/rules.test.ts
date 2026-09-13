@@ -64,7 +64,7 @@ describe('index by finishing place', () => {
     const S = defaultState();
     field(S, 'r1', { p1: [-1] });
     const t = indexTable(S);
-    expect(t.p1[0].after).toBe(start('p1') - 1);
+    expect(t.p1[0].after).toBeCloseTo(start('p1') - 1, 5);
     for (const pid of ['p2', 'p3', 'p4']) {
       expect(t[pid][0].applied).toBe(true);
       expect(t[pid][0].after).toBeCloseTo(start(pid) + 1 / 3, 2);

@@ -1,7 +1,7 @@
 // Minimal offline shell so the app installs as a PWA and opens without signal.
 // Navigations go network-first with a cached fallback; hashed assets are
 // cache-first. Live scores still need a connection — Supabase is not cached.
-const CACHE = 'golf-trip-v1';
+const CACHE = 'arran-2026-v1';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['./'])).then(() => self.skipWaiting()));

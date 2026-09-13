@@ -37,7 +37,7 @@ describe('app flow', () => {
   it('shows the welcome screen until a name is picked', () => {
     mount();
     expect(screen.getByText("Who's this?")).toBeTruthy();
-    fireEvent.click(screen.getByText('Player Two'));
+    fireEvent.click(screen.getByText('Jonny Bidewell'));
     expect(screen.queryByText("Who's this?")).toBeNull();
     expect(localStorage.getItem(ME_KEY)).toBe('p2');
   });
@@ -54,7 +54,7 @@ describe('app flow', () => {
   it('player page shows their index and a row per round, no extras panel', () => {
     setMe('p1');
     const { container } = mount('/player/p2');
-    expect(screen.getByText('Player Two')).toBeTruthy();
+    expect(screen.getByText('Jonny Bidewell')).toBeTruthy();
     expect(screen.getByText('The week')).toBeTruthy();
     expect(container.querySelectorAll('a.pweek-row')).toHaveLength(7);
     expect(screen.queryByText('Bonus ball')).toBeNull();
@@ -96,11 +96,11 @@ describe('app flow', () => {
     expect(screen.queryByText('Group bet · this hole')).toBeNull();
     const slide1 = container.querySelector('.slide[data-slide="1"]')!;
     expect(slide1.querySelectorAll('.score-row')).toHaveLength(4);
-    const row = [...slide1.querySelectorAll('.score-row')].find((r) => within(r as HTMLElement).queryByText('Player T'))! as HTMLElement;
+    const row = [...slide1.querySelectorAll('.score-row')].find((r) => within(r as HTMLElement).queryByText('Jonny'))! as HTMLElement;
     fireEvent.click(within(row).getByLabelText('One stroke more'));
     expect((within(row).getByPlaceholderText('4') as HTMLInputElement).value).toBe('4');
     const slide2 = container.querySelector('.slide[data-slide="2"]')!;
-    const row2 = [...slide2.querySelectorAll('.score-row')].find((r) => within(r as HTMLElement).queryByText('Player T'))! as HTMLElement;
+    const row2 = [...slide2.querySelectorAll('.score-row')].find((r) => within(r as HTMLElement).queryByText('Jonny'))! as HTMLElement;
     fireEvent.click(within(row2).getByLabelText(/One stroke fewer/));
     expect((within(row2).getByPlaceholderText('4') as HTMLInputElement).value).toBe('3');
     let saved = JSON.parse(localStorage.getItem(STORE_KEY)!);
@@ -140,11 +140,11 @@ describe('app flow', () => {
     expect(screen.getByText(/Week points 6 · 4 · 2 · 0 for 1st–4th/)).toBeTruthy();
     unmount();
     mount('/player/p1');
-    expect(screen.getByText(/Index 14.0 → 13.0/)).toBeTruthy();
-    expect(screen.getByText(/now 13.0/)).toBeTruthy();
+    expect(screen.getByText(/Index 8.8 → 7.8/)).toBeTruthy();
+    expect(screen.getByText(/now 7.8/)).toBeTruthy();
     cleanup();
     mount('/player/p4');
-    expect(screen.getByText(/Index 8.0 → 9.0/)).toBeTruthy();
+    expect(screen.getByText(/Index 14.7 → 15.7/)).toBeTruthy();
   });
 
   it('standings: you chip, seven round columns labelled by day, cells link to cards', () => {
@@ -162,7 +162,7 @@ describe('app flow', () => {
     setMe('p1');
     const { container, unmount } = mount('/player/p2/round/r1');
     let back = container.querySelector('a.back')!;
-    expect(back.textContent).toBe('Player T');
+    expect(back.textContent).toBe('Jonny');
     expect(back.getAttribute('href')).toBe('/player/p2');
     unmount();
     const { container: c } = mount('/standings');

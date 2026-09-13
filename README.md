@@ -1,12 +1,12 @@
-# Golf Trip
+# Arran Golf 2026
 
-Mobile-first web app for a four-man golf trip: seven stableford rounds over four days, real course data, handicap indexes that move by finishing place, swipeable score entry, live standings — synced live between every phone.
+Mobile-first web app for the Isle of Arran trip, 23–26 September 2026: seven stableford rounds over four days, real course data, handicap indexes that move by finishing place, swipeable score entry, live standings — synced live between every phone.
 
 Cloned from [yorkshire-golf](https://github.com/TimHoare/yorkshire-golf), the app for the September 2026 Yorkshire week. Everything that makes it *this* trip lives in `src/data/trip.ts`; the courses, players, dates and name are still placeholders — search the repo for **TBC**.
 
 **Stack:** React 19 + TypeScript + React Router 7, built with Vite, tested with Vitest. Supabase (Postgres + realtime) for multi-phone sync. Deployed to GitHub Pages by GitHub Actions on every push to `main`.
 
-Live at: https://timhoare.github.io/golf-trip/
+Live at: https://timhoare.github.io/arran-golf/
 
 ## Rules in play
 

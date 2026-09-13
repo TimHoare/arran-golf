@@ -8,11 +8,11 @@ import type { BitKind } from '../lib/state';
 // realtime channel (so two trips on one phone never mix), and starts the
 // countdown. slug is also the bit that tells one trip's database from another's.
 export const TRIP = {
-  slug: 'golf-trip',
-  name: 'Golf Trip',
-  year: 'TBC',
-  dates: 'Dates TBC',
-  firstTee: new Date(2000, 0, 1),   // TBC — set to the first tee time and the countdown appears
+  slug: 'arran-golf-2026',
+  name: 'Arran',
+  year: '2026',
+  dates: 'Wed 23 – Sat 26 September',
+  firstTee: new Date(2026, 8, 23, 9, 0),   // TBC: Lochranza tee time on the Wednesday
 };
 
 export interface Hole { n: number; par: number; si: number; yds: number | null }
@@ -56,12 +56,12 @@ export const ROUNDS: Round[] = [
   round(6, 'Sun', 4, 'am'), round(7, 'Sun', 4, 'pm'),
 ];
 
-// TBC: names and the handicap index each player starts the trip on.
+// Handicap index each player starts the trip on.
 export const PLAYERS: Player[] = [
-  { id: 'p1', name: 'Tim Hoare',    start: 14.0 },
-  { id: 'p2', name: 'Player Two',   start: 12.0 },
-  { id: 'p3', name: 'Player Three', start: 18.0 },
-  { id: 'p4', name: 'Player Four',  start: 8.0 },
+  { id: 'p1', name: 'Liam Cameron',   start: 8.8 },
+  { id: 'p2', name: 'Jonny Bidewell', start: 5.6 },
+  { id: 'p3', name: 'Adam Gooch',     start: 16.2 },
+  { id: 'p4', name: 'George Pledger', start: 14.7 },
 ];
 
 // How a player's index moves after each completed stableford round:
