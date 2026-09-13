@@ -60,7 +60,7 @@ export const ROUNDS: Round[] = [
   { id: 'r1', n: 1, dow: 'Wed', dnum: 23, mon: 'Sept', format: 'stableford', pairs: false,
     club: 'Lochranza Golf', short: 'Lochranza', town: 'Lochranza', address: 'Lochranza Campsite, Lochranza, Isle of Arran, KA27 8HL',
     par: 33, cr: 31.8, slope: 87, tees: 'white',
-    holes: card(Array(11).fill(3), [1,5,4,11,7,3,8,10,9,2,6], [110,67,77,87,98,87,116,91,103,73,110]),
+    holes: card(Array(11).fill(3), [1,5,4,11,7,3,8,10,9,2,6], [110,67,77,87,98,87,116,91,103,87,73]),
     groups: [{ tee: 'Turn up', players: ALL }] },
   // Brodick: 18 holes, par 64 off the yellows (the 2nd is a par 4 off the
   // whites, par 65 — so no white tee option here, the app can't change a
