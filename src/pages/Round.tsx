@@ -2,7 +2,7 @@
 // everyone's course handicaps, the course card, and pairs/scramble widgets.
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { ONE_GROUP, R, PL, RULES, first, gname } from '../data/trip';
-import { courseHandicap, groupsFor, groupsSet, half, indexBefore, phFor, roundStatus, shotsOn, teamHandicap, teeFor, fmt1 } from '../lib/scoring';
+import { courseHandicap, groupsFor, groupsSet, half, indexBefore, splits, phFor, roundStatus, shotsOn, teamHandicap, teeFor, fmt1 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
@@ -117,9 +117,9 @@ export function RoundPage() {
                   <td>{shots ? <span className={`si-pill s${Math.min(shots, 2)}`}>{h.si}</span> : h.si}</td>
                 </tr>
               );
-              return i === half(r) - 1 ? [tr, nine('Out', 0, half(r))] : [tr];
+              return splits(r) && i === half(r) - 1 ? [tr, nine('Out', 0, half(r))] : [tr];
             })}
-            {nine('In', half(r), r.holes.length)}
+            {splits(r) && nine('In', half(r), r.holes.length)}
             {nine('Total', 0, r.holes.length)}
           </tbody>
         </table>

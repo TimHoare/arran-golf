@@ -7,7 +7,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { BITS, ONE_GROUP, PL, R, RULES, first, gname, ord } from '../data/trip';
 import { BIT_KINDS } from '../lib/state';
 import {
-  bitsOf, bonusGoneBy, bonusHoleFor, courseHandicap, flightName, flightsFor, fmt1, fmtMoney, groupBitTally, groupsFor, groupsSet, half,
+  bitsOf, bonusGoneBy, bonusHoleFor, courseHandicap, flightName, flightsFor, fmt1, fmtMoney, groupBitTally, groupsFor, groupsSet, half, splits,
   indexBefore, indexHistory, pairTotals, phFor, playerTally, roundStatus, scrambleResults, stablefordResults, teamHandicap,
   teamTally, trim, type Tally,
 } from '../lib/scoring';
@@ -182,9 +182,9 @@ export function PlayerRoundPage() {
                   {extrasOn && <td className="x">{extras(i)}</td>}
                 </tr>
               );
-              return i === half(r) - 1 ? [tr, sumRow('Out', 0, half(r))] : [tr];
+              return splits(r) && i === half(r) - 1 ? [tr, sumRow('Out', 0, half(r))] : [tr];
             })}
-            {sumRow('In', half(r), r.holes.length)}
+            {splits(r) && sumRow('In', half(r), r.holes.length)}
             {sumRow('Total', 0, r.holes.length)}
           </tbody>
         </table>

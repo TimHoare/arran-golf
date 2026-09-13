@@ -93,9 +93,11 @@ describe('index by finishing place', () => {
 describe('extras off', () => {
   it('nothing doubles: a full card is 36 for net par, not 38', () => {
     const S = defaultState();
+    S.scores.r2 = { p1: netParFor(S, 'r2', 'p1') };
+    expect(bonusHoleFor(S, 'r2', 'p1')).toBeNull();
+    expect(playerTally(S, 'r2', 'p1').pts).toBe(36);
     S.scores.r1 = { p1: netParFor(S, 'r1', 'p1') };
-    expect(bonusHoleFor(S, 'r1', 'p1')).toBeNull();
-    expect(playerTally(S, 'r1', 'p1').pts).toBe(36);
+    expect(playerTally(S, 'r1', 'p1').pts).toBe(22);   // eleven holes of net par
   });
   it('the rules sentence says what is in play', () => {
     const d = describeRules();
@@ -113,6 +115,6 @@ describe('two rounds in a day', () => {
     expect(dayLabel(ROUNDS[1])).toBe('Thu am');
     expect(dayLabel(ROUNDS[2])).toBe('Thu pm');
     expect(ROUNDS.map((r) => r.short)).toEqual(['Lochranza', 'Brodick', 'Lamlash', 'Corrie', 'Whiting Bay', 'Machrie Bay', 'Shiskine']);
-    expect(ROUNDS.map(holesLabel)).toEqual(['11 holes, played as 18', '18 holes', '18 holes', '9 holes, twice', '18 holes', '9 holes, twice', '12 holes']);
+    expect(ROUNDS.map(holesLabel)).toEqual(['11 holes', '18 holes', '18 holes', '9 holes, twice', '18 holes', '9 holes, twice', '12 holes']);
   });
 });

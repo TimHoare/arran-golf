@@ -24,7 +24,7 @@ export interface Round {
   format: 'stableford' | 'scramble'; pairs: boolean;
   par: number; cr: number; slope: number; tees: string;
   holes: Hole[]; groups: Group[];
-  courseHoles?: number; // greens on the ground when fewer than the holes played: 9 played twice, Lochranza's 11 as 18
+  courseHoles?: number; // greens on the ground when fewer than the holes played: 9 played twice
   altTees?: TeeSet[];   // besides the default tees above; selectable in settings
 }
 export interface Player { id: string; name: string; start: number }
@@ -51,14 +51,16 @@ const twiceYds = (yds: number[]) => [...yds, ...yds];
 const ALL = ['p1', 'p2', 'p3', 'p4'];
 export const ROUNDS: Round[] = [
   // Lochranza: pay-and-play run by the campsite. No longer the 9-hole par 34
-  // the aggregators still list — it's now 11 par-3 holes extended to 18 (par
-  // 54, 1,642 yds), one tee set for everyone, rated 52.1/87. CHECK THIS CARD
-  // AT THE CAMPSITE: the 18-hole card here is GolfPass's and its stroke
-  // indexes look generated (odd front, even back) rather than the club's.
+  // the aggregators still list — it's 11 par-3 holes, one tee set for
+  // everyone, and we play the 11 (par 33). The only published figures are
+  // for the 18-hole extension (52.1/87, par 54): the rating here is that
+  // gap scaled to 11 holes, and the stroke indexes are the 18-hole card's
+  // order re-ranked over these 11. CHECK THE CARD AT THE CAMPSITE — GolfPass
+  // is the only source and its card looks generated rather than the club's.
   { id: 'r1', n: 1, dow: 'Wed', dnum: 23, mon: 'Sept', format: 'stableford', pairs: false,
     club: 'Lochranza Golf', short: 'Lochranza', town: 'Lochranza', address: 'Lochranza Campsite, Lochranza, Isle of Arran, KA27 8HL',
-    par: 54, cr: 52.1, slope: 87, tees: 'white', courseHoles: 11,
-    holes: card(Array(18).fill(3), [1,7,5,17,9,3,11,15,13, 2,8,6,18,10,4,12,16,14], [110,67,77,87,98,87,116,91,103, 73,110,67,77,87,98,87,116,91]),
+    par: 33, cr: 31.8, slope: 87, tees: 'white',
+    holes: card(Array(11).fill(3), [1,5,4,11,7,3,8,10,9,2,6], [110,67,77,87,98,87,116,91,103,73,110]),
     groups: [{ tee: 'Turn up', players: ALL }] },
   // Brodick: 18 holes, par 64 off the yellows (the 2nd is a par 4 off the
   // whites, par 65 — so no white tee option here, the app can't change a
@@ -192,7 +194,7 @@ export const colour = (i: number) => AVATAR_COLOURS[((i % AVATAR_COLOURS.length)
 export const gname = (grp: Group, t: number) => grp.name || `Group ${t + 1}`;
 // The day a round is on, as a short label: 'Fri', or 'Fri am' when the day has two.
 export const dayLabel = (r: Round) => r.dow + (r.slot ? ` ${r.slot}` : '');
-// '18 holes', '12 holes', '9 holes, twice', '11 holes, played as 18'.
+// '18 holes', '11 holes', '9 holes, twice'.
 export const holesLabel = (r: Round) => {
   const n = r.holes.length, c = r.courseHoles ?? n;
   return c === n ? `${n} holes` : c * 2 === n ? `${c} holes, twice` : `${c} holes, played as ${n}`;

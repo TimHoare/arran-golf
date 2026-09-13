@@ -64,11 +64,12 @@ describe('app flow', () => {
 
   it("player round page: the card without an Extras column or bonus-ball legend", () => {
     setMe('p1');
-    save({ scores: { r1: { p2: [3, 2, 0, ...Array(15).fill(3)] } } });   // Lochranza: all par 3s
+    save({ scores: { r1: { p2: [3, 2, 0, ...Array(8).fill(3)] } } });   // Lochranza: 11 par 3s
     const { container: c } = mount('/player/p2/round/r1');
     expect(screen.getByText(R('r1')!.club)).toBeTruthy();
     const rows = [...c.querySelectorAll('table.player-sc tbody tr:not(.sum)')];
-    expect(rows).toHaveLength(18);
+    expect(rows).toHaveLength(11);
+    expect([...c.querySelectorAll('table.player-sc tr.sum td:first-child')].map((td) => td.textContent)).toEqual(['Total']);   // no Out/In on an odd count
     expect(c.querySelectorAll('table.player-sc thead th')).toHaveLength(5);   // Hole Par SI Gross Pts
     expect(rows[0].querySelector('.gs')!.className).toBe('gs par');      // 3 on a par 3
     expect(rows[1].querySelector('.gs')!.className).toBe('gs birdie');   // 2
@@ -89,10 +90,10 @@ describe('app flow', () => {
     expect(screen.getByText('4,468 yds')).toBeTruthy();   // Brodick off the yellows
   });
 
-  it('scoring page: one group, 18 slides, + from empty records par, − a birdie, 0 a pickup, no extras', () => {
+  it('scoring page: one group, a slide per hole, + from empty records par, − a birdie, 0 a pickup, no extras', () => {
     setMe('p2');
     const { container } = mount('/round/r1/score/1');
-    expect(container.querySelectorAll('.swipe .slide')).toHaveLength(18);
+    expect(container.querySelectorAll('.swipe .slide')).toHaveLength(11);   // Lochranza
     expect(container.querySelector('.seg')).toBeNull();   // nothing to switch between
     expect(screen.queryByText('Bonus balls')).toBeNull();
     expect(screen.queryByText('Group bet · this hole')).toBeNull();
@@ -122,7 +123,7 @@ describe('app flow', () => {
     setMe('watcher');
     const { container } = mount('/round/r1/score/1');
     expect(container.querySelectorAll('.stepper button')).toHaveLength(0);
-    expect(container.querySelectorAll('.stepper.ro')).toHaveLength(18 * 4);
+    expect(container.querySelectorAll('.stepper.ro')).toHaveLength(11 * 4);
   });
 
   it('scoring deep link with no hole lands on the first unfinished hole', () => {

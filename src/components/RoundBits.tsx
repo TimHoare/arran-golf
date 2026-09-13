@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { ONE_GROUP, PL, PLAYERS, R, first, pName, gname, ord, type Round } from '../data/trip';
 import { RULES } from '../data/trip';
 import {
-  groupsFor, half, pairPointsFor, pairTotals, playerTally, roundStatus, stablefordResults, teamTally, phFor, scrambleResults, shotsOn, trim,
+  groupsFor, half, pairPointsFor, splits, pairTotals, playerTally, roundStatus, stablefordResults, teamTally, phFor, scrambleResults, shotsOn, trim,
   type Tally,
 } from '../lib/scoring';
 import { setPairDraw } from '../lib/store';
@@ -372,9 +372,9 @@ export function LiveScorecard({ r, group, selHole, onHole, myPh = null }: { r: R
                   {cols.map((c, k) => cell(c.tally.rows[i], k))}
                 </tr>
               );
-              return i === half(r) - 1 ? [tr, sumRow('Out', 0, half(r))] : [tr];
+              return splits(r) && i === half(r) - 1 ? [tr, sumRow('Out', 0, half(r))] : [tr];
             })}
-            {sumRow('In', half(r), r.holes.length)}
+            {splits(r) && sumRow('In', half(r), r.holes.length)}
             {sumRow('Total', 0, r.holes.length)}
           </tbody>
         </table>

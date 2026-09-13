@@ -11,7 +11,8 @@ import {
 
 const filled = (n: number) => Array(18).fill(n);
 const PIDS = PLAYERS.map((p) => p.id);
-const r1 = ROUNDS[0];
+const r1 = ROUNDS[0];   // Lochranza: 11 par 3s
+const r2 = ROUNDS[1];   // Brodick: a full 18
 // Gross scores that make net par on every hole off the handicap the player
 // carries into the round, with per-hole stroke adjustments on top.
 const netParFor = (S: TripState, rid: string, pid: string, delta: number[] = []) =>
@@ -30,7 +31,7 @@ describe('trip shape', () => {
   it('every card adds up: 18 holes (12 at Shiskine), stroke indexes 1–n once each, alt tees the same length', () => {
     for (const r of ROUNDS) {
       const n = r.holes.length;
-      expect(n).toBe(r.short === 'Shiskine' ? 12 : 18);
+      expect(n).toBe(r.short === 'Shiskine' ? 12 : r.short === 'Lochranza' ? 11 : 18);
       expect([...r.holes].map((h) => h.si).sort((a, b) => a - b)).toEqual(Array.from({ length: n }, (_, i) => i + 1));
       expect(r.holes.reduce((a, h) => a + h.par, 0)).toBe(r.par);
       expect(r.holes.map((h) => h.n)).toEqual(Array.from({ length: n }, (_, i) => i + 1));
@@ -88,14 +89,18 @@ describe('handicap maths', () => {
 
 describe('tally', () => {
   it('sums points and strokes, tracks completeness', () => {
-    const t = tally(r1.id, filled(4), 0);
+    const t = tally(r2.id, filled(4), 0);
     expect(t.complete).toBe(true);
     expect(t.strokes).toBe(72);
     expect(t.pts).toBe(t.rows.reduce((a, r) => a + Math.max(0, 2 + r.par - 4), 0));
-    expect(tally(r1.id, blank18(), 0).played).toBe(0);
-    const partial = tally(r1.id, [4, 4, 4, ...Array(15).fill(null)], 0);
+    expect(tally(r2.id, blank18(), 0).played).toBe(0);
+    const partial = tally(r2.id, [4, 4, 4, ...Array(15).fill(null)], 0);
     expect(partial.played).toBe(3);
     expect(partial.complete).toBe(false);
+    // Lochranza's eleven: complete at 11, 33 strokes of 3s
+    const eleven = tally(r1.id, [...Array(11).fill(3), ...Array(7).fill(null)], 0);
+    expect(eleven.complete).toBe(true);
+    expect(eleven.strokes).toBe(33);
   });
 });
 
@@ -112,7 +117,7 @@ describe('results', () => {
   it('countback reads back 9, back 6, back 3', () => {
     const gross = filled(4);
     gross[17] = 3;
-    const t = tally(r1.id, gross, 0);
+    const t = tally(r2.id, gross, 0);
     const [b9, b6, b3] = countback(t);
     expect(b9).toBe(t.rows.slice(9).reduce((a, r) => a + (r.pts ?? 0), 0));
     expect(b6).toBe(t.rows.slice(12).reduce((a, r) => a + (r.pts ?? 0), 0));
@@ -121,8 +126,8 @@ describe('results', () => {
   it('breaks ties on the back 9 instead of sharing', () => {
     const S = defaultState();
     // Both 38: p1's birdies are on the front nine, p2's on the back → p2 takes 1st.
-    S.scores[r1.id] = { p1: netParFor(S, r1.id, 'p1', [-1, -1]), p2: netParFor(S, r1.id, 'p2', [...Array(15).fill(0), -1, -1]) };
-    const rows = stablefordResults(S, r1.id);
+    S.scores[r2.id] = { p1: netParFor(S, r2.id, 'p1', [-1, -1]), p2: netParFor(S, r2.id, 'p2', [...Array(15).fill(0), -1, -1]) };
+    const rows = stablefordResults(S, r2.id);
     expect(rows[0].pts).toBe(rows[1].pts);
     expect(rows[0].pid).toBe('p2');
     expect(rows.map((r) => r.place)).toEqual([1, 2]);

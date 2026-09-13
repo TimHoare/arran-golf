@@ -58,7 +58,7 @@ Push to `main`. The `Deploy to GitHub Pages` action runs tests, builds, and publ
 
 | | Day | Course | Holes | Par | Tees in the app |
 |---|---|---|---|---|---|
-| 1 | Wed 23 | Lochranza | 11 par-3s played as 18 | 54 | one set |
+| 1 | Wed 23 | Lochranza | 11, all par 3 | 33 | one set |
 | 2 | Thu 24 am | Brodick | 18 | 64 | yellow (whites change a par, so not offered) |
 | 3 | Thu 24 pm | Lamlash | 18 | 64 | white · yellow |
 | 4 | Fri 25 am | Corrie | 9 × 2 | 62 | yellow · white |
@@ -66,7 +66,7 @@ Push to `main`. The `Deploy to GitHub Pages` action runs tests, builds, and publ
 | 6 | Sat 26 am | Machrie Bay | 9 × 2 | 66 | white · yellow |
 | 7 | Sat 26 pm | Shiskine | 12 | 42 | yellow · white |
 
-Rounds have their own hole count: Shiskine's twelve holes get twelve slides, a 6/4/2 countback and a course handicap scaled by 12/18 (which reproduces the club's own conversion chart). The nine-holers use the club cards' two stroke indexes per hole — odd first time round, even the second. Every card's sources and caveats are in the comments in `src/data/trip.ts`; the ones worth checking in the clubhouse are Lochranza's stroke indexes (only an aggregator's card exists for the new 18-tee layout) and Brodick's and Lamlash's ratings (third-party figures, the clubs don't publish theirs).
+Rounds have their own hole count: Lochranza's eleven and Shiskine's twelve get that many slides, a 6/4/2 countback and a course handicap scaled by 12/18 (which reproduces the club's own conversion chart). The nine-holers use the club cards' two stroke indexes per hole — odd first time round, even the second. Every card's sources and caveats are in the comments in `src/data/trip.ts`; the ones worth checking in the clubhouse are Lochranza's stroke indexes (only an aggregator's card exists for the new 18-tee layout) and Brodick's and Lamlash's ratings (third-party figures, the clubs don't publish theirs).
 
 ## Still to fill in
 

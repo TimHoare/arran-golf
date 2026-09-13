@@ -20,8 +20,10 @@ export const groupsSet = (S: TripState, rid: string) => !!S.groups[rid] || R(rid
 // Rounds aren't all 18 holes (Shiskine is 12; the nine-holers are played twice
 // as 18). Scores are stored as 18 slots regardless; a round only reads its own.
 export const holeCount = (rid: string) => R(rid)!.holes.length;
-// Where the card splits into its two halves: 9 for 18 holes, 6 for 12.
+// Where the card splits into its two halves: 9 for 18 holes, 6 for 12. An odd
+// count (Lochranza's 11) has no halves — callers skip the Out/In rows.
 export const half = (r: Round) => r.holes.length / 2;
+export const splits = (r: Round) => r.holes.length % 2 === 0;
 export const blank18 = (): HoleScores => Array(18).fill(null);
 export const holesOf = (S: TripState, rid: string, pid: string): HoleScores => S.scores[rid]?.[pid] || blank18();
 export const teamHoles = (S: TripState, rid: string, t: number): HoleScores => S.scramble[rid]?.[t] || blank18();
