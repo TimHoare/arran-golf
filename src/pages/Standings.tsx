@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ROUNDS, RULES, dayLabel, first, ord, pName, PL } from '../data/trip';
+import { ROUNDS, RULES, first, ord, pName, PL } from '../data/trip';
 import {
   currentIndex, fmt1, playerTally, roundPlace, roundPoints, roundStatus,
   scrambleResults, signed, standings, trim,
@@ -54,7 +54,7 @@ export function StandingsPage() {
       <div className="card table-wrap">
         <table className="rounds-table">
           <thead>
-            <tr><th>Player</th>{ROUNDS.map((r) => <th key={r.id} title={r.club}>{dayLabel(r)}</th>)}<th>Total</th></tr>
+            <tr><th>Player</th>{ROUNDS.map((r) => <th key={r.id} title={r.club}>{r.dow}{r.slot && <small> {r.slot}</small>}</th>)}<th>Total</th></tr>
           </thead>
           <tbody>
             {st.map((row) => (

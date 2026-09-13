@@ -1,7 +1,7 @@
 // One player's page: their indexes, and how their week is going round by round.
 import type { ReactNode } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { BITS, PL, R, RULES, dayLabel, gname, ord } from '../data/trip';
+import { BITS, ONE_GROUP, PL, R, RULES, dayLabel, gname, ord } from '../data/trip';
 import { BIT_KINDS } from '../lib/state';
 import {
   courseHandicap, fmt1, groupsFor, groupsSet, indexHistory, pairPointsFor, playerBitTotal, playerTally, roundPlace,
@@ -102,7 +102,7 @@ export function PlayerPage() {
           );
         })}
       </div>
-      {pid === me && <p className="small muted" style={{ marginTop: 12 }}>This is you — your group is highlighted on each round page.</p>}
+      {pid === me && <p className="small muted" style={{ marginTop: 12 }}>This is you — {ONE_GROUP ? 'your row is highlighted on every leaderboard' : 'your group is highlighted on each round page'}.</p>}
     </>
   );
 }

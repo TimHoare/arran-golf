@@ -4,7 +4,7 @@
 // card, with the player's own bits from the flight log.
 import type { ReactNode } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { BITS, PL, R, RULES, first, gname, ord } from '../data/trip';
+import { BITS, ONE_GROUP, PL, R, RULES, first, gname, ord } from '../data/trip';
 import { BIT_KINDS } from '../lib/state';
 import {
   bitsOf, bonusGoneBy, bonusHoleFor, courseHandicap, flightName, flightsFor, fmt1, fmtMoney, groupBitTally, groupsFor, groupsSet, half,
@@ -108,7 +108,7 @@ export function PlayerRoundPage() {
           <div className="sub">
             {scramble && grp
               ? <>{grp.players.map((x) => PL(x).name).join(' & ')}{drawn ? <> · {grp.tee}</> : <> · teams to be set</>}</>
-              : <>{p.name}{drawn && grp ? <> · {gname(grp, t)} · {grp.tee}</> : null}</>}
+              : <>{p.name}{drawn && grp ? <>{ONE_GROUP ? null : <> · {gname(grp, t)}</>} · {grp.tee}</> : null}</>}
           </div>
         </div>
       </div>
@@ -219,7 +219,7 @@ export function PlayerRoundPage() {
       </>}
 
       <div className="btn-row" style={{ margin: '14px 0 4px' }}>
-        <Link className="btn ghost grow" to={`/round/${r.id}`}>Course, groups &amp; leaderboard</Link>
+        <Link className="btn ghost grow" to={`/round/${r.id}`}>{ONE_GROUP ? <>Course &amp; leaderboard</> : <>Course, groups &amp; leaderboard</>}</Link>
         {drawn && <Link className="btn primary" to={`/round/${r.id}/score`}>Scores</Link>}
       </div>
     </>

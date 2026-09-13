@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ROUNDS, TRIP, dayLabel, first, gname } from '../data/trip';
+import { ONE_GROUP, ROUNDS, TRIP, dayLabel, first, gname, holesLabel } from '../data/trip';
 import { groupsFor, groupsSet, roundStatus } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { FormatChips } from '../components/RoundBits';
@@ -52,8 +52,12 @@ export function TripPage() {
                   <div className="itin-group" key={t}>
                     <b>{g.tee}</b>
                     <span>
-                      {g.name ? <><i>{gname(g, t)}</i> · </> : null}
-                      {groupsSet(S, r.id) ? g.players.map(first).join(', ') : <span className="muted">To be set</span>}
+                      {ONE_GROUP
+                        ? <>{holesLabel(r)} · {r.town}</>
+                        : <>
+                            {g.name ? <><i>{gname(g, t)}</i> · </> : null}
+                            {groupsSet(S, r.id) ? g.players.map(first).join(', ') : <span className="muted">To be set</span>}
+                          </>}
                     </span>
                   </div>
                 ))}

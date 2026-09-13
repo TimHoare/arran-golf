@@ -63,7 +63,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         <div className="course-edit">
           <h3>Tees</h3>
           <p className="help">Which tees each course is played off. Changing this moves everyone's course handicaps for that round, on every phone.</p>
-          <div className="stakes">
+          <div className="stakes one">
             {ROUNDS.filter((r) => r.altTees?.length).map((r) => (
               <label key={r.id}>
                 <span>{r.short}</span>
@@ -71,7 +71,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                   value={S.teeChoice[r.id] ?? ''}
                   onChange={(e) => setTeeChoice(r.id, e.target.value || null)}
                 >
-                  <option value="">{r.tees} (booked)</option>
+                  <option value="">{r.tees} (default)</option>
                   {r.altTees!.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
                 </select>
               </label>

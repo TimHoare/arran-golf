@@ -1,7 +1,7 @@
 // Round info page: course facts, map link, your course handicap, groups with
 // everyone's course handicaps, the course card, and pairs/scramble widgets.
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { R, PL, RULES, first, gname } from '../data/trip';
+import { ONE_GROUP, R, PL, RULES, first, gname } from '../data/trip';
 import { courseHandicap, groupsFor, groupsSet, half, indexBefore, phFor, roundStatus, shotsOn, teamHandicap, teeFor, fmt1 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { Avatar } from '../components/Avatar';
@@ -77,15 +77,15 @@ export function RoundPage() {
         <div className="cf"><span className="l">Slope</span><b>{tee.slope}</b></div>
       </div>
 
-      <div className="section-title"><h2>{scramble ? 'Teams' : 'Groups'}</h2><span className="eyebrow">tee times · course hcp</span></div>
+      <div className="section-title"><h2>{scramble ? 'Teams' : ONE_GROUP ? 'Players' : 'Groups'}</h2><span className="eyebrow">{ONE_GROUP ? 'tee time · course hcp' : 'tee times · course hcp'}</span></div>
       <div className="groups">
         {groups.map((grp, t) => (
           <div className="group-card" key={t}>
             <div className="tee">{grp.tee}</div>
             <div className="gbody">
-              <div className="gname">
+              {(!ONE_GROUP || scramble) && <div className="gname">
                 {gname(grp, t)}{scramble && drawn && <> <span className="chip gorse">team hcp {teamHandicap(S, r.id, t)}</span></>}
-              </div>
+              </div>}
               {drawn ? (
                 <div className="gmembers">
                   {grp.players.map((pid) => (

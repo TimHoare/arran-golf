@@ -2,7 +2,7 @@
 // scramble result, the round leaderboard, and the live gross/points scorecard.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { PL, PLAYERS, R, first, pName, gname, ord, type Round } from '../data/trip';
+import { ONE_GROUP, PL, PLAYERS, R, first, pName, gname, ord, type Round } from '../data/trip';
 import { RULES } from '../data/trip';
 import {
   groupsFor, half, pairPointsFor, pairTotals, playerTally, roundStatus, stablefordResults, teamTally, phFor, scrambleResults, shotsOn, trim,
@@ -352,7 +352,7 @@ export function LiveScorecard({ r, group, selHole, onHole, myPh = null }: { r: R
 
   return (
     <>
-      <div className="section-title"><h2>Scorecard</h2><span className="eyebrow">{scramble ? 'team gross · points' : gname(g, group) + ' · gross · points'}</span></div>
+      <div className="section-title"><h2>Scorecard</h2><span className="eyebrow">{scramble ? 'team gross · points' : ONE_GROUP ? 'gross · points' : gname(g, group) + ' · gross · points'}</span></div>
       <div className="sc-wrap">
         <table className="sc">
           <thead>

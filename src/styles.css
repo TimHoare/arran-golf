@@ -265,7 +265,8 @@ p { margin: 0; }
    headers, and the week points stacked under each stableford score. */
 .rounds-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
 .rounds-table th, .rounds-table td { padding: 7px 2px; text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.rounds-table th { font-weight: 700; font-size: 10px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.06em; }
+.rounds-table th { font-weight: 700; font-size: 10px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.06em; vertical-align: bottom; }
+.rounds-table th small { display: block; font-size: 9px; font-weight: 600; letter-spacing: 0.04em; color: var(--brass); }
 .rounds-table td:first-child, .rounds-table th:first-child { text-align: left; font-weight: 700; padding-left: 0; width: 22%; overflow: hidden; text-overflow: ellipsis; }
 .rounds-table td.tot, .rounds-table th:last-child { width: 14%; }
 .rounds-table td.tot b { color: var(--pine); font-size: 14px; }
@@ -548,6 +549,7 @@ p { margin: 0; }
 .bet-pot b { color: var(--pine); font-size: 15px; }
 
 .stakes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; margin-top: 10px; }
+.stakes.one { grid-template-columns: 1fr; }
 .stakes label { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13.5px; font-weight: 600; }
 .stake-in { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-2); font-weight: 600; }
 .stakes input { width: 52px; text-align: right; border: 1px solid var(--line-2); border-radius: 6px; padding: 4px 6px; font-size: 13px; font-weight: 700; background: var(--card); }
