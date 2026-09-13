@@ -2,7 +2,7 @@
 // everyone's course handicaps, the course card, and pairs/scramble widgets.
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { R, PL, RULES, first, gname } from '../data/trip';
-import { courseHandicap, groupsFor, indexBefore, phFor, roundStatus, shotsOn, teamHandicap, teeFor, fmt1 } from '../lib/scoring';
+import { courseHandicap, groupsFor, groupsSet, indexBefore, phFor, roundStatus, shotsOn, teamHandicap, teeFor, fmt1 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
 import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
@@ -27,7 +27,7 @@ export function RoundPage() {
   const android = /android/i.test(navigator.userAgent);
   const mapsUrl = android ? `geo:0,0?q=${where}` : `https://www.google.com/maps/search/?api=1&query=${where}`;
   const groups = groupsFor(S, r.id);
-  const drawn = !!S.groups[r.id];
+  const drawn = groupsSet(S, r.id);
   const status = roundStatus(S, r.id);
   const playing = me && me !== 'watcher' && groups.some((g) => g.players.includes(me));
 
@@ -102,7 +102,7 @@ export function RoundPage() {
           </div>
         ))}
       </div>
-      {status === 'none' && <GroupsTools r={r} />}
+      {status === 'none' && r.groups.length > 1 && <GroupsTools r={r} />}
 
       <div className="section-title"><h2>Course</h2><span className="eyebrow">{tee.label + ' tees'}{myPh !== null ? ` · your shots off PH ${myPh}` : ''}</span></div>
       <div className="sc-wrap">

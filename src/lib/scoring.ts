@@ -13,6 +13,10 @@ export function groupsFor(S: TripState, rid: string): Group[] {
   return r.groups.map((g, i) => ({ ...g, players: ov[i] || g.players }));
 }
 
+// Whether a round's groups are settled: a saved draw, or nothing to draw
+// because the whole field goes off together.
+export const groupsSet = (S: TripState, rid: string) => !!S.groups[rid] || R(rid)!.groups.length === 1;
+
 export const blank18 = (): HoleScores => Array(18).fill(null);
 export const holesOf = (S: TripState, rid: string, pid: string): HoleScores => S.scores[rid]?.[pid] || blank18();
 export const teamHoles = (S: TripState, rid: string, t: number): HoleScores => S.scramble[rid]?.[t] || blank18();

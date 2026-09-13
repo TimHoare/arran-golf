@@ -1,6 +1,6 @@
 {
-  "name": "Yorkshire Golf Week 2026",
-  "short_name": "Yorkshire 26",
+  "name": "Golf Trip",
+  "short_name": "Golf Trip",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

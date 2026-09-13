@@ -1,10 +1,18 @@
-# Yorkshire Golf Week 2026
+# Golf Trip
 
-Mobile-first web app for a golf trip: itinerary, real course data, players and handicap indexes, swipeable score entry, automatic index/course-handicap maths, live standings — synced live between every phone. This copy is the Yorkshire week of 7–11 September 2026; everything that makes it that trip lives in one file, so it doubles as the template for the next one (see *Starting a new trip*).
+Mobile-first web app for a four-man golf trip: seven stableford rounds over four days, real course data, handicap indexes that move by finishing place, swipeable score entry, live standings — synced live between every phone.
+
+Cloned from [yorkshire-golf](https://github.com/TimHoare/yorkshire-golf), the app for the September 2026 Yorkshire week. Everything that makes it *this* trip lives in `src/data/trip.ts`; the courses, players, dates and name are still placeholders — search the repo for **TBC**.
 
 **Stack:** React 19 + TypeScript + React Router 7, built with Vite, tested with Vitest. Supabase (Postgres + realtime) for multi-phone sync. Deployed to GitHub Pages by GitHub Actions on every push to `main`.
 
-Live at: https://timhoare.github.io/yorkshire-golf/
+Live at: https://timhoare.github.io/golf-trip/
+
+## Rules in play
+
+- Every round is individual stableford off full course handicap. Week points 6 · 4 · 2 · 0 for 1st–4th each round, ties split on the back 9, 6, 3 and then shared.
+- After every round each index moves by finishing place: −1.0 for the winner, −0.5 for 2nd, +0.5 for 3rd, +1.0 for 4th. Ties after countback share the steps. Nothing moves until all four cards are in, and the afternoon round is played off the index the morning left you on.
+- No bonus balls, hidden pairs, scramble or side bets — all switched off in `RULES`.
 
 ## Develop
 
@@ -17,7 +25,7 @@ npm run build    # type-check + production build to dist/
 
 ## Structure
 
-- `src/data/trip.ts` — everything fixed about the trip: its name and dates (`TRIP`), rounds, real scorecards (men's yellow tees from each club's published card), players, rules (`RULES`: points table, how the index moves, whether bonus balls and side bets are in). Tee times and groups are placeholders until the tee sheet is settled.
+- `src/data/trip.ts` — everything fixed about the trip: its name and dates (`TRIP`), rounds and scorecards, players, rules (`RULES`: points table, how the index moves, whether bonus balls and side bets are in). One group of four per round, so scoring needs no group draw.
 - `src/lib/scoring.ts` — pure scoring engine: WHS course/playing handicaps, stableford tallies, index drift (by points from a par score, or by finishing place), week points, scramble, hidden pairs.
 - `src/lib/store.ts` — app store with localStorage persistence and Supabase live sync: local-first writes, an offline outbox that retries, realtime subscription applying other phones' changes.
 - `src/pages/` — Trip, Round (info: course facts, map, handicaps, course card), Scoring (swipe between holes, +/- against par), Players, Standings.
@@ -46,14 +54,9 @@ Check out an older commit of `backups` first to go back further. The scripts use
 
 Push to `main`. The `Deploy to GitHub Pages` action runs tests, builds, and publishes `dist/`. First-time repo setup: Settings → Pages → Source: **GitHub Actions**. The site lives at `/<repo name>/`; the build reads that from the repo, so nothing to edit.
 
-## Starting a new trip
+## Still to fill in
 
-Each trip is its own repo and its own Supabase project: the old app stays up as the record of its week, the new one can't touch its data, and a free Supabase org allows two projects.
-
-1. **Clone this repo** under the new trip's name (the repo name becomes the URL path), push it to GitHub, and turn Pages on as above. Keep `name` in `package.json` equal to the repo name so local builds match.
-2. **New Supabase project.** Run `supabase-schema.sql` in its SQL editor, then put the project URL and publishable key in `src/config.ts`.
-3. **Fill in `src/data/trip.ts`.** `TRIP` (slug, name, year, dates, first tee — the slug keys this phone's storage and the realtime channel, so make it new), `ROUNDS` (two rounds on one day take `slot: 'am' | 'pm'`), `PLAYERS`, `RULES`, `ORGANISER`. Each round's `format` and `pairs` switch scramble and hidden pairs on per round; `RULES.bonusBalls` and `RULES.sideBets` switch those on for the trip; `RULES.indexAdjust` picks how the index moves.
-4. **Photos** (optional): `src/assets/avatars/<player id>.webp`. Anyone without one gets their initials.
-5. **Name the app** in `index.html` (`<title>`) and `public/manifest.json` (`name`, `short_name`), and retitle this README.
-6. **Backups**: create an empty `backups` branch so the backup action has somewhere to commit:
-   `git checkout --orphan backups && git rm -rf . && git commit --allow-empty -m "Backups" && git push origin backups`
+1. **Supabase.** Create the trip's own project, run `supabase-schema.sql` in its SQL editor, put the project URL and publishable key in `src/config.ts`. Until then the app runs in single-phone mode.
+2. **`src/data/trip.ts`.** `TRIP` (name, year, dates, first tee for the countdown — and change `slug` if the repo is renamed), the seven rounds (club, town, address, tee time, and the real card: par, SI and yards per hole, CR and slope), the four players and their starting indexes.
+3. **Photos** (optional): `src/assets/avatars/<player id>.webp`. Anyone without one gets their initials.
+4. **Name the app** in `index.html` (`<title>`), `public/manifest.json` (`name`, `short_name`) and this README, if "Golf Trip" isn't it. Renaming the repo moves the site to the new `/<name>/` path on its own.

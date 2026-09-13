@@ -4,7 +4,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { BITS, PL, R, RULES, dayLabel, gname, ord } from '../data/trip';
 import { BIT_KINDS } from '../lib/state';
 import {
-  courseHandicap, fmt1, groupsFor, indexHistory, pairPointsFor, playerBitTotal, playerTally, roundPlace,
+  courseHandicap, fmt1, groupsFor, groupsSet, indexHistory, pairPointsFor, playerBitTotal, playerTally, roundPlace,
   roundPoints, roundStatus, scrambleResults, signed, standings, teamHandicap, trim,
 } from '../lib/scoring';
 import { useStore } from '../lib/useStore';
@@ -59,7 +59,7 @@ export function PlayerPage() {
       <div className="pweek">
         {hist.map(({ round: r, before, after, applied }) => {
           const groups = groupsFor(S, r.id);
-          const drawn = !!S.groups[r.id];
+          const drawn = groupsSet(S, r.id);
           const grp = groups.find((g) => g.players.includes(pid));
           const t = groups.indexOf(grp!);
           const status = roundStatus(S, r.id);

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { R, PL, RULES, first, gname, type Hole, type Round } from '../data/trip';
 import {
-  bonusGoneBy, bonusHoleFor, firstUnfinishedHole, flightName, flightsFor, groupsFor, holesOf, playerTally,
+  bonusGoneBy, bonusHoleFor, firstUnfinishedHole, flightName, flightsFor, groupsFor, groupsSet, holesOf, playerTally,
   phFor, relPar, shotsOn, teamHandicap, teamHoles, teamTally,
 } from '../lib/scoring';
 import { setBonusBall, setGross } from '../lib/store';
@@ -253,7 +253,7 @@ export function ScoringPage() {
   }, [holeN, valid, group]);
 
   if (!r || !g) return <Navigate to="/trip" replace />;
-  if (!S.groups[r.id]) return <Navigate to={`/round/${r.id}`} replace />;
+  if (!groupsSet(S, r.id)) return <Navigate to={`/round/${r.id}`} replace />;
   if (!valid) return <Navigate to={`/round/${r.id}/score/${firstUnfinishedHole(S, r.id, myGroup)}`} replace />;
 
   const goHole = (n: number) => {

@@ -7,7 +7,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { BITS, PL, R, RULES, first, gname, ord } from '../data/trip';
 import { BIT_KINDS } from '../lib/state';
 import {
-  bitsOf, bonusGoneBy, bonusHoleFor, courseHandicap, flightName, flightsFor, fmt1, fmtMoney, groupBitTally, groupsFor,
+  bitsOf, bonusGoneBy, bonusHoleFor, courseHandicap, flightName, flightsFor, fmt1, fmtMoney, groupBitTally, groupsFor, groupsSet,
   indexBefore, indexHistory, pairTotals, phFor, playerTally, roundStatus, scrambleResults, stablefordResults, teamHandicap,
   teamTally, trim, type Tally,
 } from '../lib/scoring';
@@ -27,7 +27,7 @@ export function PlayerRoundPage() {
   const scramble = r.format === 'scramble';
   const status = roundStatus(S, r.id);
   const groups = groupsFor(S, r.id);
-  const drawn = !!S.groups[r.id];
+  const drawn = groupsSet(S, r.id);
   const t = groups.findIndex((g) => g.players.includes(pid));
   const grp = groups[t];
   // On scramble day this is the team's page: both members throughout.

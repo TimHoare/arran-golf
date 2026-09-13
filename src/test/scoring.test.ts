@@ -1,20 +1,51 @@
+// The scoring engine against this trip's data: handicap maths, tallies,
+// results and standings. Course numbers are read from ROUNDS rather than
+// written out, so the tests survive the real cards going in.
 import { describe, expect, it } from 'vitest';
-import { defaultState, migrate } from '../lib/state';
+import { PLAYERS, R, ROUNDS, RULES } from '../data/trip';
+import { defaultState, type TripState } from '../lib/state';
 import {
-  blank18, bonusGoneBy, bonusHoleFor, countback, courseHandicap, firstUnfinishedHole, flightsFor, fmtMoney, groupBitTally,
-  holePoints, pairPointsFor, pairTotals, playerBitTotal, playerTally, roundPoints, scrambleResults, shotsOn,
+  blank18, countback, courseHandicap, firstUnfinishedHole, groupsSet, holePoints, phFor, roundPoints, shotsOn,
   stablefordResults, standings, tally,
 } from '../lib/scoring';
 
 const filled = (n: number) => Array(18).fill(n);
+const PIDS = PLAYERS.map((p) => p.id);
+const r1 = ROUNDS[0];
+// Gross scores that make net par on every hole off the handicap the player
+// carries into the round, with per-hole stroke adjustments on top.
+const netParFor = (S: TripState, rid: string, pid: string, delta: number[] = []) =>
+  R(rid)!.holes.map((h, i) => h.par + shotsOn(phFor(S, pid, rid), h.si) + (delta[i] ?? 0));
+
+describe('trip shape', () => {
+  it('is four players, seven stableford rounds over four days', () => {
+    expect(PLAYERS).toHaveLength(4);
+    expect(ROUNDS).toHaveLength(7);
+    expect(ROUNDS.every((r) => r.format === 'stableford' && !r.pairs)).toBe(true);
+    expect(new Set(ROUNDS.map((r) => r.dnum)).size).toBe(4);
+    expect(RULES.placePoints).toEqual([6, 4, 2, 0]);
+    expect(RULES.bonusBalls).toBe(false);
+    expect(RULES.sideBets).toBe(false);
+  });
+  it('every card adds up: 18 holes, stroke indexes 1–18 once each', () => {
+    for (const r of ROUNDS) {
+      expect(r.holes).toHaveLength(18);
+      expect([...r.holes].map((h) => h.si).sort((a, b) => a - b)).toEqual(Array.from({ length: 18 }, (_, i) => i + 1));
+      expect(r.holes.reduce((a, h) => a + h.par, 0)).toBe(r.par);
+    }
+  });
+  it('one group of four needs no draw, so scoring is open from the start', () => {
+    const S = defaultState();
+    for (const r of ROUNDS) expect(groupsSet(S, r.id)).toBe(true);
+    expect(firstUnfinishedHole(S, r1.id, 0)).toBe(1);
+  });
+});
 
 describe('handicap maths', () => {
   it('course handicap = index × slope/113 + (CR − par), rounded', () => {
     const S = defaultState();
-    // Ganton (d2): slope 133, CR 72.2, par 71
-    expect(courseHandicap(S, 14.0, 'd2')).toBe(Math.round(14.0 * (133 / 113) + (72.2 - 71)));
-    // Elsham (d1): slope 132, CR 71.2, par 71
-    expect(courseHandicap(S, 3.8, 'd1')).toBe(Math.round(3.8 * (132 / 113) + 0.2));
+    for (const r of ROUNDS)
+      expect(courseHandicap(S, 14.0, r.id)).toBe(Math.round(14.0 * (r.slope / 113) + (r.cr - r.par)));
   });
   it('shots per hole follow stroke index', () => {
     expect(shotsOn(18, 1)).toBe(1);
@@ -25,235 +56,77 @@ describe('handicap maths', () => {
     expect(shotsOn(24, 7)).toBe(1);
     expect(shotsOn(-2, 18)).toBe(-1); // plus handicaps give shots back on high SI
   });
-  it('a tee choice moves course handicaps', () => {
-    const S = defaultState();
-    // Ganton white: CR 73.6, slope 138 (vs yellow 72.2/133)
-    S.teeChoice.d2 = 'white';
-    expect(courseHandicap(S, 14.0, 'd2')).toBe(Math.round(14.0 * (138 / 113) + (73.6 - 71)));
-    // an unknown key falls back to the default tees
-    S.teeChoice.d2 = 'nope';
-    expect(courseHandicap(S, 14.0, 'd2')).toBe(Math.round(14.0 * (133 / 113) + (72.2 - 71)));
-  });
   it('stableford points: 2 for net par, floor at 0', () => {
     expect(holePoints(4, 4, 0)).toBe(2);
     expect(holePoints(5, 4, 1)).toBe(2);
     expect(holePoints(3, 4, 0)).toBe(3);
     expect(holePoints(9, 4, 1)).toBe(0);
     expect(holePoints(null, 4, 0)).toBeNull();
+    expect(holePoints(0, 4, 0)).toBe(0);   // picked up
   });
 });
 
 describe('tally', () => {
   it('sums points and strokes, tracks completeness', () => {
-    const t = tally('d1', filled(4), 0);
+    const t = tally(r1.id, filled(4), 0);
     expect(t.complete).toBe(true);
     expect(t.strokes).toBe(72);
-    // Elsham par 71: all-4s is level on par-4s (2pts), birdie on par-5s (3), bogey on par-3s (1)
-    const expected = t.rows.reduce((a, r) => a + Math.max(0, 2 + r.par - 4), 0);
-    expect(t.pts).toBe(expected);
-    expect(tally('d1', blank18(), 0).played).toBe(0);
+    expect(t.pts).toBe(t.rows.reduce((a, r) => a + Math.max(0, 2 + r.par - 4), 0));
+    expect(tally(r1.id, blank18(), 0).played).toBe(0);
+    const partial = tally(r1.id, [4, 4, 4, ...Array(15).fill(null)], 0);
+    expect(partial.played).toBe(3);
+    expect(partial.complete).toBe(false);
   });
 });
 
 describe('results', () => {
-  it('distributes the full place-points table', () => {
+  it('distributes 6 · 4 · 2 · 0 in full', () => {
     const S = defaultState();
-    S.scores.d1 = Object.fromEntries(['p1','p2','p3','p4','p5','p6','p7','p8'].map((pid) => [pid, filled(4)]));
-    const rows = stablefordResults(S, 'd1');
-    expect(rows).toHaveLength(8);
-    const totalWeekPts = rows.reduce((a, r) => a + (r.points ?? 0), 0);
-    expect(totalWeekPts).toBe(34); // 10+8+6+4+3+2+1+0 always fully distributed
+    S.scores[r1.id] = Object.fromEntries(PIDS.map((pid, i) => [pid, filled(4 + (i % 2))]));
+    const rows = stablefordResults(S, r1.id);
+    expect(rows).toHaveLength(4);
+    expect(rows.reduce((a, r) => a + (r.points ?? 0), 0)).toBe(12);
     expect(rows[0].place).toBe(1);
+    expect(rows[3].points).toBe(0);
   });
   it('countback reads back 9, back 6, back 3', () => {
     const gross = filled(4);
-    gross[17] = 3; // one better on the last
-    const t = tally('d1', gross, 0);
+    gross[17] = 3;
+    const t = tally(r1.id, gross, 0);
     const [b9, b6, b3] = countback(t);
     expect(b9).toBe(t.rows.slice(9).reduce((a, r) => a + (r.pts ?? 0), 0));
     expect(b6).toBe(t.rows.slice(12).reduce((a, r) => a + (r.pts ?? 0), 0));
     expect(b3).toBe(t.rows.slice(15).reduce((a, r) => a + (r.pts ?? 0), 0));
   });
-  it('breaks stableford ties on the back 9 instead of sharing', () => {
+  it('breaks ties on the back 9 instead of sharing', () => {
     const S = defaultState();
-    // p5 and p8 both start on 9.1 → identical playing handicaps. Same total
-    // gross, but p8's better holes are on the back 9 → p8 takes the place.
-    // (Neither touches the 18th, which the uncalled bonus ball doubles for both.)
-    const a = filled(4); a[0] = 3; a[1] = 3;   // front-loaded
-    const b = filled(4); b[15] = 3; b[16] = 3; // back-loaded
-    S.scores.d1 = { p5: a, p8: b };
-    const rows = stablefordResults(S, 'd1');
+    // Both 38: p1's birdies are on the front nine, p2's on the back → p2 takes 1st.
+    S.scores[r1.id] = { p1: netParFor(S, r1.id, 'p1', [-1, -1]), p2: netParFor(S, r1.id, 'p2', [...Array(15).fill(0), -1, -1]) };
+    const rows = stablefordResults(S, r1.id);
     expect(rows[0].pts).toBe(rows[1].pts);
-    expect(rows[0].pid).toBe('p8');
-    expect(rows[0].place).toBe(1);
-    expect(rows[1].place).toBe(2);
-    expect(rows[0].tied).toBe(false);
-    expect(rows[0].points).toBe(10);
-    expect(rows[1].points).toBe(8);
+    expect(rows[0].pid).toBe('p2');
+    expect(rows.map((r) => r.place)).toEqual([1, 2]);
+    expect(rows.map((r) => r.tied)).toEqual([false, false]);
+    expect(rows.map((r) => r.points)).toEqual([6, 4]);
   });
-  it('pairs add 6/4/2/0 each, ties on aggregate shared', () => {
+  it('level on every countback: the place points are shared', () => {
     const S = defaultState();
-    S.scores.d1 = Object.fromEntries(['p1','p2','p3','p4','p5','p6','p7','p8'].map((pid) => [pid, filled(4)]));
-    S.pairs.d1 = { pairs: [['p1','p2'],['p3','p4'],['p5','p6'],['p7','p8']], revealed: true };
-    const rows = pairTotals(S, 'd1');
-    expect(rows.reduce((a, r) => a + (r.points ?? 0), 0)).toBe(12); // 6+4+2+0
-    expect(rows[0].place).toBe(1);
-    // each member of a pair takes the pair's full points
-    const top = rows[0].pair;
-    expect(pairPointsFor(S, 'd1', top[0])).toBe(rows[0].points);
-    expect(pairPointsFor(S, 'd1', top[1])).toBe(rows[0].points);
-    // roundPoints = individual place points + pair points
-    const total = ['p1','p2','p3','p4','p5','p6','p7','p8'].reduce((a, pid) => a + (roundPoints(S, 'd1', pid) ?? 0), 0);
-    expect(total).toBe(34 + 2 * 12);
+    // p1 and p2 net par everywhere (identical 36s); p3 and p4 drop a shot on the 1st.
+    S.scores[r1.id] = Object.fromEntries(PIDS.map((pid) => [pid, netParFor(S, r1.id, pid, pid === 'p3' || pid === 'p4' ? [1] : [])]));
+    const rows = stablefordResults(S, r1.id);
+    const top = rows.filter((r) => r.place === 1);
+    expect(top.map((r) => r.pid).sort()).toEqual(['p1', 'p2']);
+    expect(top.every((r) => r.tied && r.points === 5)).toBe(true);   // (6 + 4) / 2
+    expect(PIDS.reduce((a, pid) => a + (roundPoints(S, r1.id, pid) ?? 0), 0)).toBe(12);
   });
-  it('scramble scoring flights: teams grouped by tee time', () => {
+  it('standings rank by week points, then stableford total', () => {
     const S = defaultState();
-    const fs = flightsFor(S, 'd3');
-    expect(fs).toHaveLength(2);
-    expect(fs[0].teams).toEqual([0, 1]);
-    expect(fs[1].teams).toEqual([2, 3]);
-    expect(fs[0].players).toEqual(['p1', 'p3', 'p5', 'p7']);
-    // a flight's hole isn't done until both its teams have a score
-    S.scramble.d3 = { 0: [4, ...Array(17).fill(null)] };
-    expect(firstUnfinishedHole(S, 'd3', 0)).toBe(1);
-    S.scramble.d3[1] = [4, ...Array(17).fill(null)];
-    expect(firstUnfinishedHole(S, 'd3', 0)).toBe(2);
-  });
-  it('scramble awards 6/4/2/0 per player by team place', () => {
-    const S = defaultState();
-    // d3 teams: A p1/p3 · B p5/p7 · C p2/p4 · D p6/p8 — a stroke a hole apart
-    S.scramble.d3 = { 0: filled(3), 1: filled(4), 2: filled(5), 3: filled(6) };
-    const res = scrambleResults(S, 'd3');
-    expect(res.decided).toBe(true);
-    expect(res.winner).toBe(0);
-    expect(res.rows.p1).toEqual({ points: 6, place: 1, won: true, tie: false });
-    expect(res.rows.p3.points).toBe(6);
-    expect(res.rows.p6.place).toBe(4);
-    expect(res.rows.p6.points).toBe(0);
-    const total = Object.values(res.rows).reduce((a, r) => a + r.points, 0);
-    expect(total).toBe(24); // (6+4+2+0) × 2 players
-  });
-  it('standings ranks by week points then stableford total', () => {
-    const S = defaultState();
-    S.scores.d1 = Object.fromEntries(['p1','p2','p3','p4','p5','p6','p7','p8'].map((pid) => [pid, filled(5)]));
+    S.scores[r1.id] = Object.fromEntries(PIDS.map((pid, i) => [pid, filled(4 + i)]));
     const st = standings(S);
+    expect(st).toHaveLength(4);
     expect(st[0].rank).toBe(1);
-    expect(st.map((r) => r.pid)).toHaveLength(8);
-  });
-});
-
-describe('side bets', () => {
-  it('tallies a group: totals across holes, last one from the highest hole', () => {
-    const S = defaultState();
-    S.bits.d1 = { 0: { cuckoo: [
-      { counts: { p1: 2, p2: 1 }, last: 'p2' }, null, { counts: { p3: 1 }, last: 'p3' },
-      ...Array(15).fill(null),
-    ] } };
-    const t = groupBitTally(S, 'd1', 0, 'cuckoo');
-    expect(t.total).toBe(4);
-    expect(t.last).toBe('p3');
-    // an untouched kind is empty
-    expect(groupBitTally(S, 'd1', 0, 'fish').total).toBe(0);
-    expect(groupBitTally(S, 'd1', 0, 'fish').last).toBeNull();
-  });
-  it('counts one player across every round and group', () => {
-    const S = defaultState();
-    S.bits.d1 = { 0: { camel: [{ counts: { p1: 2 }, last: 'p1' }, ...Array(17).fill(null)] } };
-    S.bits.d2 = { 1: { camel: [null, { counts: { p1: 1, p4: 3 }, last: 'p4' }, ...Array(16).fill(null)] } };
-    expect(playerBitTotal(S, 'p1', 'camel')).toBe(3);
-    expect(playerBitTotal(S, 'p4', 'camel')).toBe(3);
-    expect(playerBitTotal(S, 'p1', 'fish')).toBe(0);
-  });
-  it('migrate keeps bits and stakes, pads holes, drops junk', () => {
-    const S = migrate({
-      v: 3, scores: {}, pairs: {}, scramble: {}, groups: {},
-      bits: { d1: { 0: { cuckoo: [{ counts: { p1: 1, p2: 0 }, last: 'p1' }], junk: [1, 2] } } },
-      stakes: { cuckoo: 25, fish: -5, nonsense: 99 },
-    });
-    const arr = S.bits.d1[0].cuckoo!;
-    expect(arr).toHaveLength(18);
-    expect(arr[0]).toEqual({ counts: { p1: 1 }, last: 'p1' });
-    expect(arr[5]).toBeNull();
-    expect((S.bits.d1[0] as Record<string, unknown>).junk).toBeUndefined();
-    expect(S.stakes).toEqual({ cuckoo: 25, camel: 10, fish: 10, threeputt: 10, lostball: 10 });
-    // states written before side bets existed come up with defaults
-    const old = migrate({ v: 3, scores: {}, pairs: {}, scramble: {}, groups: {} });
-    expect(old.bits).toEqual({});
-    expect(old.stakes.threeputt).toBe(10);
-  });
-  it('money formatting', () => {
-    expect(fmtMoney(10)).toBe('10p');
-    expect(fmtMoney(100)).toBe('£1.00');
-    expect(fmtMoney(230)).toBe('£2.30');
-  });
-});
-
-describe('bonus balls', () => {
-  it('doubles the points on the nominated hole only', () => {
-    const plain = tally('d1', filled(4), 0);
-    const doubled = tally('d1', filled(4), 0, 0);
-    expect(doubled.rows[0].pts).toBe((plain.rows[0].pts ?? 0) * 2);
-    expect(doubled.rows[0].bonus).toBe(true);
-    expect(doubled.rows[1].pts).toBe(plain.rows[1].pts);
-    expect(doubled.pts).toBe(plain.pts + (plain.rows[0].pts ?? 0));
-  });
-  it('a lost ball never doubles: not the round it was lost, nor later', () => {
-    const S = defaultState();
-    S.bonus.p1 = { used: { d1: 4, d2: 7 }, lost: 'd1' };
-    expect(bonusHoleFor(S, 'd1', 'p1')).toBeNull(); // lost on its hole → 2× void, either/or
-    expect(bonusHoleFor(S, 'd2', 'p1')).toBeNull();
-    expect(bonusGoneBy(S, 'd2', 'p1')).toBe(true);
-    expect(bonusGoneBy(S, 'd1', 'p1')).toBe(false);
-    // still in play before it's lost
-    S.bonus.p2 = { used: { d1: 4 }, lost: 'd2' };
-    expect(bonusHoleFor(S, 'd1', 'p2')).toBe(4);
-  });
-  it('must be played every round: uncalled by the time the 18th is in, it doubles the 18th', () => {
-    const S = defaultState();
-    // nothing scored yet: no default, nothing to double
-    expect(bonusHoleFor(S, 'd1', 'p1')).toBeNull();
-    // 17 holes in, 18th still open: they can still call it
-    S.scores.d1 = { p1: [...Array(17).fill(4), null] };
-    expect(bonusHoleFor(S, 'd1', 'p1')).toBeNull();
-    // 18th scored without a call → the 18th it is
-    S.scores.d1.p1[17] = 4;
-    expect(bonusHoleFor(S, 'd1', 'p1')).toBe(17);
-    expect(playerTally(S, 'd1', 'p1').rows[17].bonus).toBe(true);
-    // a call anywhere overrides the default
-    S.bonus.p1 = { used: { d1: 2 }, lost: null };
-    expect(bonusHoleFor(S, 'd1', 'p1')).toBe(2);
-    // lost earlier in the trip: no default either
-    S.bonus.p1 = { used: { d1: 2 }, lost: 'd1' };
-    S.scores.d2 = { p1: filled(4) };
-    expect(bonusHoleFor(S, 'd2', 'p1')).toBeNull();
-    // the scramble plays as teams: no bonus ball there
-    S.bonus.p2 = { used: {}, lost: null };
-    S.scramble.d3 = { 0: filled(4) };
-    expect(bonusHoleFor(S, 'd3', 'p2')).toBeNull();
-  });
-  it('+1 for a kept ball, only once every round is in', () => {
-    const S = defaultState();
-    const pids = ['p1','p2','p3','p4','p5','p6','p7','p8'];
-    for (const rid of ['d1','d2','d4','d5']) S.scores[rid] = Object.fromEntries(pids.map((pid) => [pid, filled(5)]));
-    S.bonus.p1 = { used: {}, lost: 'd2' };
-    // trip not finished: no +1 for anyone yet
-    expect(standings(S).every((r) => r.bonusKept === 0)).toBe(true);
-    S.scramble.d3 = { 0: filled(5), 1: filled(5), 2: filled(5), 3: filled(5) };
-    const st = standings(S);
-    for (const row of st) expect(row.bonusKept).toBe(row.pid === 'p1' ? 0 : 1);
-  });
-});
-
-describe('pickups', () => {
-  it('a pickup (gross 0) scores 0 points but counts as played', () => {
-    expect(holePoints(0, 4, 2)).toBe(0);
-    const gross = filled(4);
-    gross[0] = 0;
-    const t = tally('d1', gross, 0);
-    expect(t.played).toBe(18);
-    expect(t.complete).toBe(true);
-    expect(t.pickups).toBe(1);
-    expect(t.rows[0].pts).toBe(0);
-    expect(t.strokes).toBe(68); // pickup adds nothing to the strokes floor
+    expect(st[0].pts).toBe(6);
+    expect(st.map((r) => r.pts)).toEqual([6, 4, 2, 0]);
+    expect(st.every((r) => r.bonusKept === 0)).toBe(true);
   });
 });
